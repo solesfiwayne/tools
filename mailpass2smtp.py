@@ -370,7 +370,7 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
 			'From: test <%s>'%smtp_user,
 			'Resent-From: admin@localhost',
 			'To: '+verify_email,
-			'Subject: smtp test',
+			f'Subject: {"".join(random.choices("abcdefghijklmnopqrstuvwxyz", k=random.randint(4, 8)))} #{random.randint(10**3, 10**7)}',
 			'Return-Path: '+smtp_user,
 			'Reply-To: '+smtp_user,
 			'X-Priority: 1',
@@ -381,7 +381,7 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
 			'Content-Type: text/html; charset="utf-8"',
 			'Content-Transfer-Encoding: 8bit'
 		]
-		body = f'{smtp_server}|{port}|{smtp_login}|{password}'
+		body = f'{smtp_server},{port},{smtp_login},{password}'
 		message_as_str = '\r\n'.join(headers_arr+['', body, '.', ''])
 		return socket_try_mail(s, smtp_user, verify_email, message_as_str)
 	s.close()
