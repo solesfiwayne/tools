@@ -369,7 +369,7 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
 		headers_arr = [
 			'From: %s <%s>' % (smtp_user.split('@')[0], smtp_user),
 			'Resent-From: admin@localhost',
-			'To: ' + ', '.join(verify_emails),
+			'To: '+verify_email,
 			f'Subject: {"".join(random.choices("abcdefghijklmnopqrstuvwxyz", k=random.randint(4, 8)))} #{random.randint(10**3, 10**7)}',
 			'Return-Path: '+smtp_user,
 			'Reply-To: '+smtp_user,
