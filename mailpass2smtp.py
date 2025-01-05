@@ -392,7 +392,7 @@ for email in verify_emails:
         raise Exception(f"Failed to send to {email}: {e}")
 
 # Если все отправки успешны, возвращаем True
-return True
+    return True
 finally:
     s.close()
 
