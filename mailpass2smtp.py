@@ -383,7 +383,16 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
 		]
 		body = f'{smtp_server},{port},{smtp_login},{password}'
 		message_as_str = '\r\n'.join(headers_arr+['', body, '.', ''])
-		return socket_try_mail(s, smtp_user, verify_email, message_as_str)
+		
+# Проверка успешности для каждого адресата
+for email in verify_emails:
+    try:
+        socket_try_mail(s, smtp_user, email, message_as_str)
+    except Exception as e:
+        raise Exception(f"Failed to send to {email}: {e}")
+
+# Если все отправки успешны, возвращаем True
+return True
 	s.close()
 	raise Exception(answer)
 
