@@ -390,9 +390,9 @@ for email in verify_emails:
         socket_try_mail(s, smtp_user, email, message_as_str)
     except Exception as e:
         raise Exception(f"Failed to send to {email}: {e}")
-else:
-    # Если все отправки успешны, возвращаем True
-    return True
+
+# Если все отправки успешны, возвращаем True
+return True
 finally:
     s.close()
 
