@@ -390,12 +390,11 @@ for email in verify_emails:
         socket_try_mail(s, smtp_user, email, message_as_str)
     except Exception as e:
         raise Exception(f"Failed to send to {email}: {e}")
-
-# Если все отправки успешны, возвращаем True
-return True
+else:
+    # Если все отправки успешны, возвращаем True
+    return True
 finally:
-	s.close()
-	raise Exception(answer)
+    s.close()
 
 def worker_item(jobs_que, results_que):
 	global min_threads, threads_counter, verify_email, goods, smtp_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
