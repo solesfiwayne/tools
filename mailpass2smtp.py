@@ -393,6 +393,7 @@ for email in verify_emails:
 
 # Если все отправки успешны, возвращаем True
 return True
+finally:
 	s.close()
 	raise Exception(answer)
 
