@@ -48,10 +48,11 @@ while threads_counter<30:
     threads_counter += 1
 
 with open(filename, 'a') as fp:
-    fp.write('fetched from: '+autoconfig_url+', updated at: '+str(datetime.date.today())+'\n')
-    fp.write('domain;imap_host:imap_port;imap_login_template\n')
-    while threads_counter>0:
+    fp.write('fetched from: ' + autoconfig_url + ', updated at: ' + str(datetime.date.today()) + '\n')
+    fp.write('domain;imap_host:imap_port;imap_login_template\n')  # Изменён заголовок
+    while threads_counter > 0:
         if not results_queue.empty():
-            single_conf_string = ':'.join(results_queue.get())
-            fp.write(single_conf_string+'\n')
+            # Изменение формата строки
+            single_conf_string = ';'.join(results_queue.get()[:1]) + ':' + ':'.join(results_queue.get()[1:])
+            fp.write(single_conf_string + '\n')
             print(single_conf_string)
