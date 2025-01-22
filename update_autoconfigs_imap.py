@@ -53,6 +53,6 @@ with open(filename, 'a') as fp:
 	fp.write('domain;imap_host:imap_port;imap_login_template\n')
 	while threads_counter > 0:
 		if not results_queue.empty():
-			single_conf_string = f"{domain};{imap_host}:{imap_port};{imap_login_template}"
+			single_conf_string = ':'.join(results_queue.get())
 			fp.write(single_conf_string + '\n')
 			print(single_conf_string)
