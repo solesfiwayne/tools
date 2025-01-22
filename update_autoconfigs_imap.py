@@ -1,8 +1,8 @@
 #!/usr/local/bin/python3
 
 """
-    This script is intended to run from time to time,
-    to update "autoconfigs.txt" file with IMAP configurations.
+	This script is intended to run from time to time,
+	to update "autoconfigs.txt" file with IMAP configurations.
 """
 
 import os, sys, threading, time, re, signal, queue, requests, datetime
@@ -15,53 +15,53 @@ jobs_queue = queue.Queue()
 results_queue = queue.Queue()
 
 def quit(signum, frame):
-    print('Exiting... See ya later. Bye.')
-    sys.exit(0)
+	print('Exiting... See ya later. Bye.')
+	sys.exit(0)
 
 def fetcher(jobs_queue, results_queue):
-    global threads_counter
-    while True:
-        if jobs_queue.empty():
-            break
-        domain = jobs_queue.get()
-        try:
-            xml = requests.get(autoconfig_url + domain, timeout=3).text
-        except:
-            xml = ''
-        # Извлечение IMAP-конфигурации
-        imap_host = re.findall(r'<incomingServer type="imap">[\\s\\S]+?<hostname>([\\w.-]+)</hostname>', xml)
-        imap_port = re.findall(r'<incomingServer type="imap">[\\s\\S]+?<port>([\\d]+)</port>', xml)
-        imap_login_template = re.findall(r'<incomingServer type="imap">[\\s\\S]+?<username>([\\w.%]+)</username>', xml)
-        if imap_host and imap_port and imap_login_template:
-            results_queue.put((domain, imap_host[0], imap_port[0], imap_login_template[0]))
-    time.sleep(1)
-    threads_counter -= 1
+	global threads_counter
+	while True:
+		if jobs_queue.empty():
+			break
+		domain = jobs_queue.get()
+		try:
+			xml = requests.get(autoconfig_url + domain, timeout=3).text
+		except:
+			xml = ''
+		# Извлечение IMAP-конфигурации
+		imap_host = re.findall(r'<incomingServer type="imap">[\\s\\S]+?<hostname>([\\w.-]+)</hostname>', xml)
+		imap_port = re.findall(r'<incomingServer type="imap">[\\s\\S]+?<port>([\\d]+)</port>', xml)
+		imap_login_template = re.findall(r'<incomingServer type="imap">[\\s\\S]+?<username>([\\w.%]+)</username>', xml)
+		if imap_host and imap_port and imap_login_template:
+			results_queue.put((domain, imap_host[0], imap_port[0], imap_login_template[0]))
+	time.sleep(1)
+	threads_counter -= 1
 
 signal.signal(signal.SIGINT, quit)
 
 # Загрузка списка доменов
 try:
-    domain_list = re.findall(r'<a href="([\\w.-]+)">', requests.get(autoconfig_url, timeout=3).text)
-    for domain in domain_list:
-        jobs_queue.put(domain)
+	domain_list = re.findall(r'<a href="([\\w.-]+)">', requests.get(autoconfig_url, timeout=3).text)
+	for domain in domain_list:
+		jobs_queue.put(domain)
 except requests.RequestException as e:
-    print(f"Error fetching domain list: {e}")
-    sys.exit(1)
+	print(f"Error fetching domain list: {e}")
+	sys.exit(1)
 
 # Запуск потоков
 while threads_counter < 30:
-    threading.Thread(target=fetcher, args=(jobs_queue, results_queue), daemon=True).start()
-    threads_counter += 1
+	threading.Thread(target=fetcher, args=(jobs_queue, results_queue), daemon=True).start()
+	threads_counter += 1
 
 # Запись в файл
 with open(filename, 'w', encoding='utf-8') as fp:
-    fp.write(f'fetched from: {autoconfig_url}, updated at: {today}\\n')
-    fp.write('domain;imap_host:imap_port;imap_login_template\\n')
-    while threads_counter > 0 or not results_queue.empty():
-        while not results_queue.empty():
-            domain, imap_host, imap_port, imap_login_template = results_queue.get()
-            single_conf_string = f\"{domain};{imap_host}:{imap_port};{imap_login_template}\"
-            fp.write(single_conf_string + '\\n')
-            print(single_conf_string)
+	fp.write(f'fetched from: {autoconfig_url}, updated at: {today}\\n')
+	fp.write('domain;imap_host:imap_port;imap_login_template\\n')
+	while threads_counter > 0 or not results_queue.empty():
+		while not results_queue.empty():
+			domain, imap_host, imap_port, imap_login_template = results_queue.get()
+			single_conf_string = f\"{domain};{imap_host}:{imap_port};{imap_login_template}\"
+			fp.write(single_conf_string + '\\n')
+			print(single_conf_string)
 
 print(\"Processing complete.\")
