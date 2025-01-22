@@ -350,23 +350,32 @@ def imap_try_mail(imap_conn, mailbox, message):
 		raise Exception(f'Failed to send message to {mailbox}: {str(e)}')
 
 def imap_connect_and_send(imap_server, port, login_template, imap_user, password):
+    # Проверяем, является ли пользовательский логин email-адресом
     if is_valid_email(imap_user):
         imap_login = login_template.replace('%EMAILADDRESS%', imap_user).replace('%EMAILLOCALPART%', imap_user.split('@')[0]).replace('%EMAILDOMAIN%', imap_user.split('@')[1])
     else:
         imap_login = imap_user
-    
-    # Получаем доступный сервер IMAP
-    conn = imap_get_free_server(imap_server, port)
+
+    # Подключаемся к серверу IMAP
     try:
-        # Попытка входа
-        conn = imap_try_login(conn, imap_login, password)
-        
-        # Если аутентификация успешна, сервер считается рабочим
+        if port == 993:
+            conn = imaplib.IMAP4_SSL(imap_server, port)  # SSL подключение
+        else:
+            conn = imaplib.IMAP4(imap_server, port)  # Обычное подключение
+
+        # Настраиваем шифрование, если это необходимо
+        if port == 143:
+            conn.starttls()
+
+        # Попытка аутентификации
+        conn.login(imap_login, password)
+
+        # Если всё успешно, закрываем соединение
         conn.logout()
         return True
-    except Exception as e:
-        conn.logout()
-        raise Exception(f"Error during IMAP connection: {str(e)}")
+
+    except imaplib.IMAP4.error as e:
+        raise Exception(f"IMAP connection/authentication failed: {str(e)}")
 
 def worker_item(jobs_que, results_que):
 	global min_threads, threads_counter, verify_email, goods, imap_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
