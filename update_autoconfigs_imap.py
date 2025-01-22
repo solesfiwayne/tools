@@ -1,9 +1,9 @@
 #!/usr/local/bin/python3
 
 """
-	This script is intented to run from time to time,
-	to update "autoconfigs.txt" file.
-	Actually, you can even don't touch it - it's ok.
+    This script is intended to run from time to time,
+    to update "autoconfigs.txt" file.
+    Actually, you can even don't touch it - it's ok.
 """
 
 import os, sys, threading, time, re, signal, queue, requests, datetime
@@ -26,7 +26,7 @@ def fetcher(jobs_queue, results_queue):
             break
         domain = jobs_queue.get()
         try:
-            xml = requests.get(autoconfig_url+domain, timeout=3).text
+            xml = requests.get(autoconfig_url + domain, timeout=3).text
         except:
             xml = ''
         imap_host = re.findall(r'<incomingServer type="imap">[\s\S]+?<hostname>([\w.-]+)</hostname>', xml)
@@ -43,7 +43,7 @@ domain_list = re.findall(r'<a href="([\w.-]+)">', requests.get(autoconfig_url, t
 for domain in domain_list:
     jobs_queue.put(domain)
 
-while threads_counter<30:
+while threads_counter < 30:
     threading.Thread(target=fetcher, args=(jobs_queue, results_queue), daemon=True).start()
     threads_counter += 1
 
@@ -53,6 +53,6 @@ with open(filename, 'a') as fp:
     while threads_counter > 0:
         if not results_queue.empty():
             # Изменение формата строки
-            single_conf_string = ';'.join(results_queue.get()[:1]) + ':' + ':'.join(results_queue.get()[1:])
+            single_conf_string = f"{results_queue.get()[0]};{results_queue.get()[1]}:{results_queue.get()[2]};{results_queue.get()[3]}"
             fp.write(single_conf_string + '\n')
             print(single_conf_string)
