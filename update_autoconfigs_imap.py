@@ -49,7 +49,7 @@ while threads_counter<30:
 
 with open(filename, 'a') as fp:
     fp.write('fetched from: '+autoconfig_url+', updated at: '+str(datetime.date.today())+'\n')
-    fp.write('domain:imap_host:imap_port:imap_login_template\n')
+    fp.write('domain;imap_host:imap_port;imap_login_template\n')
     while threads_counter>0:
         if not results_queue.empty():
             single_conf_string = ':'.join(results_queue.get())
