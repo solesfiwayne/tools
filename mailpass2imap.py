@@ -420,50 +420,47 @@ def worker_item(jobs_que, results_que):
                     conn = imaplib.IMAP4_SSL(imap_server, int(port))
                 else:
                     conn = imaplib.IMAP4(imap_server, int(port))
-try:
-    conn = imaplib.IMAP4_SSL(imap_server, int(port))
-    conn.login(imap_user, password)  # Попытка входа
+                
+                conn.login(imap_user, password)  # Попытка входа
+                
+                # Проверка наличия папки INBOX
+                try:
+                    conn.select("INBOX")
+                    target_folder = "INBOX"
+                except Exception as e:
+                    results_que.put(orange(f"Папка INBOX не найдена: {e}. Ищем главную папку..."))
+                    # Если INBOX не существует, ищем первую доступную папку
+                    status, folders = conn.list()
+                    if status == "OK" and folders:
+                        target_folder = folders[0].decode().split(' "/" ')[-1].strip()
+                        results_que.put(green(f"Используем папку по умолчанию: {target_folder}"))
+                    else:
+                        results_que.put(orange("Не удалось определить основную папку."))
+                        conn.logout()
+                        raise Exception("Не удалось найти папку для добавления письма.")
 
-    # Попытка выбрать INBOX
-    try:
-        conn.select("INBOX")
-        target_folder = "INBOX"
-    except Exception as e:
-        results_que.put(orange(f"Папка INBOX не найдена: {e}. Ищем главную папку..."))
-        # Если INBOX не существует, определяем главную папку
-        status, folders = conn.list()
-        if status == "OK" and folders:
-            target_folder = folders[0].decode().split(' "/" ')[-1].strip()
-            results_que.put(green(f"Используем папку по умолчанию: {target_folder}"))
-        else:
-            results_que.put(orange("Не удалось определить основную папку."))
-            conn.logout()
-            return
+                # Генерация уникального Message-ID
+                message_id = f"<{uuid.uuid4()}@example.com>"
 
-    # Генерация уникального Message-ID
-    message_id = f"<{uuid.uuid4()}@example.com>"
+                # Создание письма
+                from email.mime.text import MIMEText
+                message = MIMEText("Это тестовое сообщение.", "plain", "utf-8")
+                message["From"] = "test@example.com"
+                message["To"] = imap_user
+                message["Subject"] = "Тестовое письмо"
+                message["Date"] = "Thu, 23 Jan 2025 10:00:00 +0000"
+                message["Message-ID"] = message_id
 
-    # Создание письма
-    message = MIMEText("Это тестовое сообщение.", "plain", "utf-8")
-    message["From"] = "test@example.com"
-    message["To"] = imap_user
-    message["Subject"] = "Тестовое письмо"
-    message["Date"] = "Thu, 23 Jan 2025 10:00:00 +0000"
-    message["Message-ID"] = message_id
+                formatted_message = message.as_string()
 
-    formatted_message = message.as_string()
+                # Добавление письма в папку
+                try:
+                    conn.append(target_folder, None, None, formatted_message.encode("utf-8"))
+                    results_que.put(green(f"Сообщение добавлено в папку {target_folder} для {imap_user}", 7))
+                except imaplib.IMAP4.error as e:
+                    results_que.put(orange(f"Ошибка при добавлении письма в папку {target_folder}: {e}"))
 
-    # Добавление письма в определённую папку
-    try:
-        conn.append(target_folder, None, None, formatted_message.encode("utf-8"))
-        results_que.put(green(f"Сообщение добавлено в папку {target_folder} для {imap_user}", 7))
-    except imaplib.IMAP4.error as e:
-        results_que.put(orange(f"Ошибка при добавлении письма в папку {target_folder}: {e}"))
-
-    conn.logout()  # Закрытие соединения
-
-except Exception as e:
-    results_que.put(orange(f"Ошибка подключения/аутентификации для {imap_user}: {e}"))
+                conn.logout()  # Закрытие соединения
                 
                 results_que.put(green(imap_user + ':\a' + password, 7))
                 open(imap_filename, 'a').write(f'{imap_server}|{port}|{imap_user}|{password}\n')
