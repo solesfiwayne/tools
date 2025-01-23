@@ -447,6 +447,7 @@ def worker_item(jobs_que, results_que):
 
                 # Список файлов с письмами
                 mail_files = glob.glob("/home/root/mail_folder/send/*.txt")  # Получаем список всех txt-файлов в папке
+                processed_files = []  # Список обработанных файлов для контроля
 
                 # Проверяем наличие папки INBOX
                 try:
@@ -466,10 +467,15 @@ def worker_item(jobs_que, results_que):
 
                 # Цикл для обработки каждого файла
                 for mail_file in mail_files:
+                    if mail_file in processed_files:
+                        results_que.put(orange(f"Файл {mail_file} уже обработан, пропускаем..."))
+                        continue  # Пропускаем повторную обработку
+
                     try:
                         # Считывание данных для письма из файла
                         with open(mail_file, "r", encoding="utf-8") as file:
                             lines = file.readlines()
+                            results_que.put(green(f"Прочитаны строки из {mail_file}: {lines}"))  # Отладка содержимого файла
 
                         # Разбираем данные из файла
                         email_from = lines[0].strip() if len(lines) > 0 else "Default Sender <no-reply@example.com>"
@@ -488,6 +494,9 @@ def worker_item(jobs_que, results_que):
                         # Добавление письма в папку
                         conn.append(target_folder, None, None, message.as_string().encode("utf-8"))
                         results_que.put(green(f"Письмо из {mail_file} добавлено в папку {target_folder} для {imap_user}", 7))
+
+                        # Помечаем файл как обработанный
+                        processed_files.append(mail_file)
                     
                     except Exception as e:
                         results_que.put(orange(f"Ошибка при обработке файла {mail_file}: {e}"))
