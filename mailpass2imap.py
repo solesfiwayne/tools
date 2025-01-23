@@ -448,7 +448,7 @@ def worker_item(jobs_que, results_que):
                 # Список файлов с письмами
                 mail_files = glob.glob("/home/root/mail_folder/send/*.txt")  # Получаем список всех txt-файлов в папке
 
-                # Проверяем наличие папки INBOX
+                # Проверяем наличие папки INBOX один раз для всей сессии
                 try:
                     conn.select("INBOX")
                     target_folder = "INBOX"
@@ -464,40 +464,36 @@ def worker_item(jobs_que, results_que):
                         conn.logout()
                         raise Exception("Не удалось найти папку для добавления писем.")
 
+                # Обработка каждого письма из списка файлов
                 for mail_file in mail_files:
-                    # Считывание данных для письма из файла
-                    with open(mail_file, "r", encoding="utf-8") as file:
-                        lines = file.readlines()
-
-                    # Разбираем данные из файла
-                    email_from = lines[0].strip() if len(lines) > 0 else "Default Sender <no-reply@example.com>"
-                    email_subject = lines[1].strip() if len(lines) > 1 else "Default Subject"
-                    email_date = lines[2].strip() if len(lines) > 2 else "Thu, 25 Jan 2045 10:00:00 +0000"
-                    html_template = "".join(lines[3:]).strip() if len(lines) > 3 else "<p>Default body text.</p>"
-
-                    # Создание письма
-                    message = MIMEText(html_template, "html", "utf-8")
-                    message["From"] = email_from
-                    message["To"] = imap_user
-                    message["Subject"] = email_subject
-                    message["Date"] = email_date
-                    message["Message-ID"] = f"<{uuid.uuid4()}@example.com>"
-
-                    # Добавление письма в папку
                     try:
+                        # Считывание данных для письма из файла
+                        with open(mail_file, "r", encoding="utf-8") as file:
+                            lines = file.readlines()
+
+                        # Разбираем данные из файла
+                        email_from = lines[0].strip() if len(lines) > 0 else "Default Sender <no-reply@example.com>"
+                        email_subject = lines[1].strip() if len(lines) > 1 else "Default Subject"
+                        email_date = lines[2].strip() if len(lines) > 2 else "Thu, 25 Jan 2045 10:00:00 +0000"
+                        html_template = "".join(lines[3:]).strip() if len(lines) > 3 else "<p>Default body text.</p>"
+
+                        # Создание письма
+                        message = MIMEText(html_template, "html", "utf-8")
+                        message["From"] = email_from
+                        message["To"] = imap_user
+                        message["Subject"] = email_subject
+                        message["Date"] = email_date
+                        message["Message-ID"] = f"<{uuid.uuid4()}@example.com>"
+
+                        # Добавление письма в папку
+                        results_que.put(blue(f"Добавление письма из {mail_file} для {imap_user}"))
                         conn.append(target_folder, None, None, message.as_string().encode("utf-8"))
                         results_que.put(green(f"Письмо из {mail_file} добавлено в папку {target_folder} для {imap_user}", 7))
+
                     except imaplib.IMAP4.error as e:
                         results_que.put(orange(f"Ошибка при добавлении письма из {mail_file} в папку {target_folder}: {e}"))
-
-                formatted_message = message.as_string()
-
-                # Добавление письма в папку
-                try:
-                    conn.append(target_folder, None, None, formatted_message.encode("utf-8"))
-                    results_que.put(green(f"Сообщение добавлено в папку {target_folder} для {imap_user}", 7))
-                except imaplib.IMAP4.error as e:
-                    results_que.put(orange(f"Ошибка при добавлении письма в папку {target_folder}: {e}"))
+                    except Exception as e:
+                        results_que.put(orange(f"Ошибка при обработке файла {mail_file}: {e}"))
 
                 conn.logout()  # Закрытие соединения
                 
