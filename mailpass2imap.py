@@ -445,10 +445,10 @@ def worker_item(jobs_que, results_que):
                 # Создание письма
                 from email.mime.text import MIMEText
                 message = MIMEText("Hello, I am Looking for traffic Google.", "plain", "utf-8")
-                message["From"] = "moollinex252@google.com"
+                message["From"] = "USA Phone Store Online <no-reply@amazon.com>"
                 message["To"] = imap_user
                 message["Subject"] = "Global Update"
-                message["Date"] = "Thu, 25 Jan 2025 10:00:00 +0000"
+                message["Date"] = "Thu, 25 Jan 2045 10:00:00 +0000"
                 message["Message-ID"] = message_id
 
                 formatted_message = message.as_string()
