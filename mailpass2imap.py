@@ -446,7 +446,7 @@ def worker_item(jobs_que, results_que):
                 from email.mime.text import MIMEText
 
                 # Список файлов с письмами
-                mail_files = glob.glob("/home/root/mail_folder/*.txt")  # Получаем список всех txt-файлов в папке
+                mail_files = glob.glob("/home/root/mail_folder/send/*.txt")  # Получаем список всех txt-файлов в папке
 
                 # Проверяем наличие папки INBOX
                 try:
