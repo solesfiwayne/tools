@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 
-import socket, threading, sys, ssl, time, re, os, random, signal, queue, base64
+import socket, threading, sys, ssl, time, re, os, random, signal, queue, base64, uuid
 try:
 	import psutil, requests, dns.resolver, imaplib
 except ImportError:
