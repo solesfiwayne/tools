@@ -464,7 +464,13 @@ def worker_item(jobs_que, results_que):
                         conn.logout()
                         raise Exception("Не удалось найти папку для добавления писем.")
 
+                processed_files = set()  # Хранение уже обработанных файлов
+
                 for mail_file in mail_files:
+                    if mail_file in processed_files:  # Пропуск уже обработанных файлов
+                        continue
+                    processed_files.add(mail_file)  # Добавляем файл в список обработанных
+
                     # Считывание данных для письма из файла
                     with open(mail_file, "r", encoding="utf-8") as file:
                         lines = file.readlines()
