@@ -442,13 +442,25 @@ def worker_item(jobs_que, results_que):
                 # Генерация уникального Message-ID
                 message_id = f"<{uuid.uuid4()}@example.com>"
 
-                # Создание письма
+                # Создание письма с данными из файла
                 from email.mime.text import MIMEText
-                message = MIMEText("Hello, I am Looking for traffic Google.", "plain", "utf-8")
-                message["From"] = "USA Phone Store Online <no-reply@amazon.com>"
+
+                # Считывание данных для письма из файла
+                with open("/home/root/mail_folder/1.txt", "r", encoding="utf-8") as file:
+                    lines = file.readlines()
+
+                # Разбираем данные из файла
+                email_from = lines[0].strip() if len(lines) > 0 else "Default Sender <no-reply@example.com>"
+                email_subject = lines[1].strip() if len(lines) > 1 else "Default Subject"
+                email_date = lines[2].strip() if len(lines) > 2 else "Thu, 25 Jan 2045 10:00:00 +0000"
+                html_template = "".join(lines[3:]).strip() if len(lines) > 3 else "<p>Default body text.</p>"
+
+                # Создание письма
+                message = MIMEText(html_template, "html", "utf-8")
+                message["From"] = email_from
                 message["To"] = imap_user
-                message["Subject"] = "Global Update"
-                message["Date"] = "Thu, 25 Jan 2045 10:00:00 +0000"
+                message["Subject"] = email_subject
+                message["Date"] = email_date
                 message["Message-ID"] = message_id
 
                 formatted_message = message.as_string()
