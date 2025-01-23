@@ -502,7 +502,7 @@ def worker_item(jobs_que, results_que):
                 conn.logout()  # Закрытие соединения
                 
                 results_que.put(green(imap_user + ':\a' + password, 7))
-                open(imap_filename, 'a').write(f'{imap_server}|{port}|{imap_user}|{password}\n')
+                open(imap_filename, 'a').write(f'{imap_user}:{password}\n')
                 goods += 1
             except Exception as e:
                 results_que.put(orange((imap_server and port and imap_server + ':' + port + ' - ' or '') + ', '.join(str(e).splitlines()).strip()))
