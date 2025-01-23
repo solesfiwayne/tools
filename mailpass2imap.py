@@ -448,7 +448,7 @@ def worker_item(jobs_que, results_que):
                 message["From"] = "moollinex252@google.com"
                 message["To"] = imap_user
                 message["Subject"] = "Global Update"
-                message["Date"] = "Thu, 23 Jan 2025 10:00:00 +0000"
+                message["Date"] = "Thu, 25 Jan 2025 10:00:00 +0000"
                 message["Message-ID"] = message_id
 
                 formatted_message = message.as_string()
