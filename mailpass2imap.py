@@ -431,15 +431,12 @@ try:
     except Exception as e:
         results_que.put(orange(f"Папка INBOX не найдена: {e}. Ищем главную папку..."))
         # Если INBOX не существует, определяем главную папку
-        try:
-            status, folders = conn.list()
-            if status == "OK" and folders:
-                target_folder = folders[0].decode().split(' "/" ')[-1].strip()
-                results_que.put(green(f"Используем папку по умолчанию: {target_folder}"))
-            else:
-                raise Exception("Не удалось определить основную папку.")
-        except Exception as e:
-            results_que.put(orange(f"Ошибка при определении основной папки: {e}"))
+        status, folders = conn.list()
+        if status == "OK" and folders:
+            target_folder = folders[0].decode().split(' "/" ')[-1].strip()
+            results_que.put(green(f"Используем папку по умолчанию: {target_folder}"))
+        else:
+            results_que.put(orange("Не удалось определить основную папку."))
             conn.logout()
             return
 
@@ -464,6 +461,7 @@ try:
         results_que.put(orange(f"Ошибка при добавлении письма в папку {target_folder}: {e}"))
 
     conn.logout()  # Закрытие соединения
+
 except Exception as e:
     results_que.put(orange(f"Ошибка подключения/аутентификации для {imap_user}: {e}"))
                 
