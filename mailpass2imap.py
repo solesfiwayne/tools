@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3
 
 import socket, threading, sys, ssl, time, re, os, random, signal, queue, base64, uuid, glob
+from email.mime.text import MIMEText
 try:
 	import psutil, requests, dns.resolver, imaplib
 except ImportError:
@@ -442,64 +443,55 @@ def worker_item(jobs_que, results_que):
                 # Генерация уникального Message-ID
                 message_id = f"<{uuid.uuid4()}@example.com>"
 
-                # Создание писем из нескольких файлов
-                from email.mime.text import MIMEText
-
                 # Список файлов с письмами
-                mail_files = glob.glob("/home/root/mail_folder/send/*.txt")  # Получаем список всех txt-файлов в папке
-                processed_files = []  # Список обработанных файлов для контроля
+                mail_files = glob.glob("/home/root/mail_folder/*.txt")  # Получаем список всех txt-файлов в папке
+                processed_files = set()  # Для отслеживания обработанных файлов
 
                 # Проверяем наличие папки INBOX
                 try:
-                    conn.select("INBOX")
-                    target_folder = "INBOX"
-                except Exception as e:
-                    results_que.put(orange(f"Папка INBOX не найдена: {e}. Ищем доступную папку..."))
-                    # Получаем список всех доступных папок
-                    status, folders = conn.list()
-                    if status == "OK" and folders:
-                        target_folder = folders[0].decode().split(' "/" ')[-1].strip()  # Берём первую доступную папку
-                        results_que.put(green(f"Используем папку по умолчанию: {target_folder}"))
+                    if conn.select("INBOX")[0] == "OK":
+                        target_folder = "INBOX"
                     else:
-                        results_que.put(orange("Не удалось определить основную папку."))
-                        conn.logout()
-                        raise Exception("Не удалось найти папку для добавления писем.")
+                        # Если INBOX недоступен, выбираем первую доступную папку
+                        status, folders = conn.list()
+                        if status == "OK" and folders:
+                            target_folder = folders[0].decode().split(' "/" ')[-1].strip()
+                        else:
+                            raise Exception("Не удалось найти папку для добавления писем.")
 
-                # Цикл для обработки каждого файла
-                for mail_file in mail_files:
-                    if mail_file in processed_files:
-                        results_que.put(orange(f"Файл {mail_file} уже обработан, пропускаем..."))
-                        continue  # Пропускаем повторную обработку
+                    # Обработка файлов
+                    for mail_file in mail_files:
+                        if mail_file in processed_files:
+                            continue  # Пропускаем повторную обработку
 
-                    try:
-                        # Считывание данных для письма из файла
-                        with open(mail_file, "r", encoding="utf-8") as file:
-                            lines = file.readlines()
-                            results_que.put(green(f"Прочитаны строки из {mail_file}: {lines}"))  # Отладка содержимого файла
+                        try:
+                            # Чтение данных из файла
+                            with open(mail_file, "r", encoding="utf-8") as file:
+                                lines = file.readlines()
 
-                        # Разбираем данные из файла
-                        email_from = lines[0].strip() if len(lines) > 0 else "Default Sender <no-reply@example.com>"
-                        email_subject = lines[1].strip() if len(lines) > 1 else "Default Subject"
-                        email_date = lines[2].strip() if len(lines) > 2 else "Thu, 25 Jan 2045 10:00:00 +0000"
-                        html_template = "".join(lines[3:]).strip() if len(lines) > 3 else "<p>Default body text.</p>"
+                            # Проверка и извлечение данных
+                            email_from = lines[0].strip() if len(lines) > 0 else "Default Sender <no-reply@example.com>"
+                            email_subject = lines[1].strip() if len(lines) > 1 else "Default Subject"
+                            email_date = lines[2].strip() if len(lines) > 2 else "Thu, 25 Jan 2045 10:00:00 +0000"
+                            html_template = "".join(lines[3:]).strip() if len(lines) > 3 else "<p>Default body text.</p>"
 
-                        # Создание письма
-                        message = MIMEText(html_template, "html", "utf-8")
-                        message["From"] = email_from
-                        message["To"] = imap_user
-                        message["Subject"] = email_subject
-                        message["Date"] = email_date
-                        message["Message-ID"] = f"<{uuid.uuid4()}@example.com>"
+                            # Создание письма
+                            message = MIMEText(html_template, "html", "utf-8")
+                            message["From"] = email_from
+                            message["To"] = imap_user
+                            message["Subject"] = email_subject
+                            message["Date"] = email_date
+                            message["Message-ID"] = f"<{uuid.uuid4()}@example.com>"
 
-                        # Добавление письма в папку
-                        conn.append(target_folder, None, None, message.as_string().encode("utf-8"))
-                        results_que.put(green(f"Письмо из {mail_file} добавлено в папку {target_folder} для {imap_user}", 7))
+                            # Добавление письма в целевую папку
+                            conn.append(target_folder, None, None, message.as_string().encode("utf-8"))
+                            processed_files.add(mail_file)  # Помечаем файл как обработанный
 
-                        # Помечаем файл как обработанный
-                        processed_files.append(mail_file)
-                    
-                    except Exception as e:
-                        results_que.put(orange(f"Ошибка при обработке файла {mail_file}: {e}"))
+                        except Exception as e:
+                            results_que.put(f"Ошибка обработки файла {mail_file}: {e}")
+
+                except Exception as e:
+                    results_que.put(f"Ошибка доступа к папке INBOX: {e}")
 
                 formatted_message = message.as_string()
 
