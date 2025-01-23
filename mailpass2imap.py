@@ -444,7 +444,7 @@ def worker_item(jobs_que, results_que):
                 message_id = f"<{uuid.uuid4()}@example.com>"
 
                 # Список файлов с письмами
-                mail_files = glob.glob("/home/root/mail_folder/*.txt")  # Получаем список всех txt-файлов в папке
+                mail_files = glob.glob("/home/root/mail_folder/send/*.txt")  # Получаем список всех txt-файлов в папке
                 processed_files = set()  # Для отслеживания обработанных файлов
 
                 # Проверяем наличие папки INBOX
