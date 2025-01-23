@@ -443,10 +443,6 @@ def worker_item(jobs_que, results_que):
                 # Генерация уникального Message-ID
                 message_id = f"<{uuid.uuid4()}@example.com>"
 
-from email.mime.text import MIMEText
-import glob
-import uuid
-
 # Список файлов с письмами
 mail_files = glob.glob("/home/root/mail_folder/send/*.txt")  # Получаем список всех txt-файлов в папке
 
