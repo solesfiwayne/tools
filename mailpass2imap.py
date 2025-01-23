@@ -443,55 +443,54 @@ def worker_item(jobs_que, results_que):
                 # Генерация уникального Message-ID
                 message_id = f"<{uuid.uuid4()}@example.com>"
 
-                # Список файлов с письмами
-                mail_files = glob.glob("/home/root/mail_folder/send/*.txt")  # Получаем список всех txt-файлов в папке
-                processed_files = set()  # Для отслеживания обработанных файлов
+# Список файлов с письмами
+mail_files = glob.glob("/home/root/mail_folder/send/*.txt")  # Получаем список всех txt-файлов в папке
 
-                # Проверяем наличие папки INBOX
-                try:
-                    if conn.select("INBOX")[0] == "OK":
-                        target_folder = "INBOX"
-                    else:
-                        # Если INBOX недоступен, выбираем первую доступную папку
-                        status, folders = conn.list()
-                        if status == "OK" and folders:
-                            target_folder = folders[0].decode().split(' "/" ')[-1].strip()
-                        else:
-                            raise Exception("Не удалось найти папку для добавления писем.")
+# Проверяем наличие папки INBOX
+try:
+    if conn.select("INBOX")[0] == "OK":
+        target_folder = "INBOX"
+    else:
+        # Если INBOX недоступен, выбираем первую доступную папку
+        status, folders = conn.list()
+        if status == "OK" and folders:
+            target_folder = folders[0].decode().split(' "/" ')[-1].strip()
+        else:
+            raise Exception("Не удалось найти папку для добавления писем.")
 
-                    # Обработка файлов
-                    for mail_file in mail_files:
-                        if mail_file in processed_files:
-                            continue  # Пропускаем повторную обработку
+    # Обработка каждого файла
+    for mail_file in mail_files:
+        try:
+            # Чтение данных из файла
+            with open(mail_file, "r", encoding="utf-8") as file:
+                lines = file.readlines()
 
-                        try:
-                            # Чтение данных из файла
-                            with open(mail_file, "r", encoding="utf-8") as file:
-                                lines = file.readlines()
+            # Проверка и извлечение данных
+            email_from = lines[0].strip() if len(lines) > 0 else "Default Sender <no-reply@example.com>"
+            email_subject = lines[1].strip() if len(lines) > 1 else "Default Subject"
+            email_date = lines[2].strip() if len(lines) > 2 else "Thu, 25 Jan 2045 10:00:00 +0000"
+            html_template = "".join(lines[3:]).strip() if len(lines) > 3 else "<p>Default body text.</p>"
 
-                            # Проверка и извлечение данных
-                            email_from = lines[0].strip() if len(lines) > 0 else "Default Sender <no-reply@example.com>"
-                            email_subject = lines[1].strip() if len(lines) > 1 else "Default Subject"
-                            email_date = lines[2].strip() if len(lines) > 2 else "Thu, 25 Jan 2045 10:00:00 +0000"
-                            html_template = "".join(lines[3:]).strip() if len(lines) > 3 else "<p>Default body text.</p>"
+            # Создание письма
+            message = MIMEText(html_template, "html", "utf-8")
+            message["From"] = email_from
+            message["To"] = imap_user
+            message["Subject"] = email_subject
+            message["Date"] = email_date
+            message["Message-ID"] = f"<{uuid.uuid4()}@example.com>"
 
-                            # Создание письма
-                            message = MIMEText(html_template, "html", "utf-8")
-                            message["From"] = email_from
-                            message["To"] = imap_user
-                            message["Subject"] = email_subject
-                            message["Date"] = email_date
-                            message["Message-ID"] = f"<{uuid.uuid4()}@example.com>"
+            # Добавление письма в целевую папку
+            conn.append(target_folder, None, None, message.as_string().encode("utf-8"))
 
-                            # Добавление письма в целевую папку
-                            conn.append(target_folder, None, None, message.as_string().encode("utf-8"))
-                            processed_files.add(mail_file)  # Помечаем файл как обработанный
+            results_que.put(f"Письмо из {mail_file} добавлено в папку {target_folder} для {imap_user}")
 
-                        except Exception as e:
-                            results_que.put(f"Ошибка обработки файла {mail_file}: {e}")
+        except Exception as e:
+            results_que.put(f"Ошибка обработки файла {mail_file}: {e}")
 
-                except Exception as e:
-                    results_que.put(f"Ошибка доступа к папке INBOX: {e}")
+except Exception as e:
+    results_que.put(f"Ошибка доступа к папке INBOX: {e}")
+finally:
+    conn.logout()
 
                 formatted_message = message.as_string()
 
