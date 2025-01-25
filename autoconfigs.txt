@@ -120,7 +120,7 @@ musician.org;smtp.mail.com:465;%EMAILADDRESS%
 mx4.et.tiki.ne.jp;smtp-auth.tiki.ne.jp:587;%EMAILADDRESS%
 minprivatemail.dk;smtp.jubii.dk:465;%EMAILADDRESS%
 mail6.dk;smtp.jubii.dk:465;%EMAILADDRESS%
-miobox.jp;mbox.iijmio-mail.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+miobox.jp;mbox.iijmio-mail.jp:587;%EMAILADDRESS%
 manmail.dk;smtp.jubii.dk:465;%EMAILADDRESS%
 mikaelsen.dk;smtp.jubii.dk:465;%EMAILADDRESS%
 mx5.et.tiki.ne.jp;smtp-auth.tiki.ne.jp:587;%EMAILADDRESS%
@@ -173,7 +173,7 @@ sofort-start.de;smtp.1und1.de:465;%EMAILADDRESS%
 tanke.dk;smtp.jubii.dk:465;%EMAILADDRESS%
 thinline.cz;smtp.cesky-hosting.cz:465;%EMAILADDRESS%
 sofortstart.de;smtp.1und1.de:465;%EMAILADDRESS%
-ss.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+ss.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 submail.dk;smtp.jubii.dk:465;%EMAILADDRESS%
 svendsen.dk;smtp.jubii.dk:465;%EMAILADDRESS%
 taxidriver.dk;smtp.jubii.dk:465;%EMAILADDRESS%
@@ -438,7 +438,7 @@ comcast.net;smtp.comcast.net:587;%EMAILADDRESS%
 cheerful.com;smtp.mail.com:587;%EMAILADDRESS%
 comic.com;smtp.mail.com:587;%EMAILADDRESS%
 coolsite.net;smtp.mail.com:587;%EMAILADDRESS%
-bp.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+bp.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 chemist.com;smtp.mail.com:465;%EMAILADDRESS%
 chemist.com;smtp.mail.com:587;%EMAILADDRESS%
 brazilmail.com;smtp.mail.com:587;%EMAILADDRESS%
@@ -461,7 +461,7 @@ collector.org;smtp.mail.com:587;%EMAILADDRESS%
 consultant.com;smtp.mail.com:587;%EMAILADDRESS%
 educa.madrid.org;smtp01.educa.madrid.org:465;%EMAILADDRESS%
 educa.madrid.org;smtp01.educa.madrid.org:587;%EMAILADDRESS%
-e23.jp;mbox.iijmio-mail.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+e23.jp;mbox.iijmio-mail.jp:587;%EMAILADDRESS%
 contractor.net;smtp.mail.com:587;%EMAILADDRESS%
 elpasotel.net;smtp.elpasotel.net:587;%EMAILADDRESS%
 corp.mail.ru;smtp.mail.ru:465;%EMAILADDRESS%
@@ -870,7 +870,7 @@ anarki.dk;mail.telenor.dk:587;%EMAILADDRESS%
 aol.es;smtp.aol.com:465;%EMAILADDRESS%
 aol.com.br;smtp.aol.com:465;%EMAILADDRESS%
 arizona.usa.com;smtp.mail.com:465;%EMAILADDRESS%
-bc.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+bc.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 bay.wind.co.jp;bay.wind.ne.jp:587;%EMAILADDRESS%
 bay.wind.jp;bay.wind.ne.jp:587;%EMAILADDRESS%
 bay.gunmanet.ne.jp;bay.wind.ne.jp:587;%EMAILADDRESS%
@@ -892,7 +892,7 @@ begavet.dk;mail.telenor.dk:587;%EMAILADDRESS%
 bigpond.com;smtp.telstra.com:465;%EMAILADDRESS%
 berlin.com;smtp.mail.com:465;%EMAILADDRESS%
 biglobe.ne.jp;octopus.biglobe.ne.jp:465;%EMAILADDRESS%
-bk.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+bk.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 bk.ru;smtp32.i.mail.ru:465;%EMAILADDRESS%
 bk.ru;smtp55.i.mail.ru:465;%EMAILADDRESS%
 bk.ru;smtp54.i.mail.ru:465;%EMAILADDRESS%
@@ -926,7 +926,7 @@ brown.plala.or.jp;brown.mail.plala.or.jp:587;%EMAILADDRESS%
 brown.plala.or.jp;www.cherry.hs.plala.or.jp:465;%EMAILADDRESS%
 brown.plala.or.jp;ruken.hs.plala.or.jp:587;%EMAILADDRESS%
 brown.plala.or.jp;fussa-5e.hs.plala.or.jp:465;%EMAILADDRESS%
-bu.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+bu.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 californiamail.com;smtp.mail.com:465;%EMAILADDRESS%
 camel.plala.or.jp;camel.mail.plala.or.jp:587;%EMAILADDRESS%
 camel.plala.or.jp;www.cherry.hs.plala.or.jp:465;%EMAILADDRESS%
@@ -1022,7 +1022,7 @@ dance.plala.or.jp;www.cherry.hs.plala.or.jp:465;%EMAILADDRESS%
 dance.plala.or.jp;ruken.hs.plala.or.jp:587;%EMAILADDRESS%
 dance.plala.or.jp;fussa-5e.hs.plala.or.jp:465;%EMAILADDRESS%
 dk-online.dk;mail.telenor.dk:587;%EMAILADDRESS%
-dd.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+dd.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 coral.plala.or.jp;coral.mail.plala.or.jp:587;%EMAILADDRESS%
 coral.plala.or.jp;www.cherry.hs.plala.or.jp:465;%EMAILADDRESS%
 coral.plala.or.jp;ruken.hs.plala.or.jp:587;%EMAILADDRESS%
@@ -1061,7 +1061,7 @@ flamenco.plala.or.jp;flamenco.mail.plala.or.jp:587;%EMAILADDRESS%
 flamenco.plala.or.jp;www.cherry.hs.plala.or.jp:465;%EMAILADDRESS%
 flamenco.plala.or.jp;ruken.hs.plala.or.jp:587;%EMAILADDRESS%
 flamenco.plala.or.jp;fussa-5e.hs.plala.or.jp:465;%EMAILADDRESS%
-ff.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+ff.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 fan.com;smtp.mail.com:465;%EMAILADDRESS%
 email.it;smtp.email.it:587;%EMAILADDRESS%
 email.it;ir-spamexp2.email.it:587;%EMAILADDRESS%
@@ -1298,7 +1298,7 @@ hotmail.com.ar;outlook-namsouth3.office365.com:587;%EMAILADDRESS%
 hotmail.com.ar;outlook-namsouth4.office365.com:587;%EMAILADDRESS%
 hotmail.com.ar;outlook-namsouth5.office365.com:587;%EMAILADDRESS%
 hotmail.com.ar;outlook-namsouth6.office365.com:587;%EMAILADDRESS%
-hh.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+hh.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 hotmail.co.id;live-nameast.office365.com:587;%EMAILADDRESS%
 hotmail.co.id;live-nameast2.office365.com:587;%EMAILADDRESS%
 hotmail.co.id;live-nameast3.office365.com:587;%EMAILADDRESS%
@@ -2222,7 +2222,7 @@ hotmail.rs;outlook-namsouth3.office365.com:587;%EMAILADDRESS%
 hotmail.rs;outlook-namsouth4.office365.com:587;%EMAILADDRESS%
 hotmail.rs;outlook-namsouth5.office365.com:587;%EMAILADDRESS%
 hotmail.rs;outlook-namsouth6.office365.com:587;%EMAILADDRESS%
-iijmio-mail.jp;mbox.iijmio-mail.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+iijmio-mail.jp;mbox.iijmio-mail.jp:587;%EMAILADDRESS%
 hotmail.co.in;live-nameast.office365.com:587;%EMAILADDRESS%
 hotmail.co.in;live-nameast2.office365.com:587;%EMAILADDRESS%
 hotmail.co.in;live-nameast3.office365.com:587;%EMAILADDRESS%
@@ -2349,7 +2349,7 @@ khaki.plala.or.jp;fussa-5e.hs.plala.or.jp:465;%EMAILADDRESS%
 k1.gunmanet.or.jp;kl.wind.ne.jp:587;%EMAILADDRESS%
 kl.wind.jp;kl.wind.ne.jp:587;%EMAILADDRESS%
 kl.wind.co.jp;kl.wind.ne.jp:587;%EMAILADDRESS%
-kk.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+kk.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 k1.gunmanet.ne.jp;kl.wind.ne.jp:587;%EMAILADDRESS%
 k1.wind.jp;kl.wind.ne.jp:587;%EMAILADDRESS%
 koreamail.com;smtp.mail.com:465;%EMAILADDRESS%
@@ -3382,7 +3382,7 @@ maroon.plala.or.jp;www.cherry.hs.plala.or.jp:465;%EMAILADDRESS%
 maroon.plala.or.jp;ruken.hs.plala.or.jp:587;%EMAILADDRESS%
 maroon.plala.or.jp;fussa-5e.hs.plala.or.jp:465;%EMAILADDRESS%
 mail.wind.ne.jp;windoffice-db.wind.ne.jp:587;%EMAILADDRESS%
-miomio.jp;mbox.iijmio-mail.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+miomio.jp;mbox.iijmio-mail.jp:587;%EMAILADDRESS%
 marchmail.com;smtp.mail.com:465;%EMAILADDRESS%
 ml.murakami.ne.jp;ml.murakami.ne.jp:25;%EMAILADDRESS%
 min-postkasse.dk;mail.telenor.dk:587;%EMAILADDRESS%
@@ -3453,7 +3453,7 @@ me.com;p34-smtp.mail.me.com:587;%EMAILADDRESS%
 me.com;p12-smtp.mail.me.com:587;%EMAILADDRESS%
 mx51.tiki.ne.jp;smtp-auth.tiki.ne.jp:587;%EMAILADDRESS%
 netbruger.dk;mail.telenor.dk:587;%EMAILADDRESS%
-nn.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+nn.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 mx52.tiki.ne.jp;smtp-auth.tiki.ne.jp:587;%EMAILADDRESS%
 nifty.com;smtp.nifty.com:587;%EMAILADDRESS%
 mx61.tiki.ne.jp;smtp-auth.tiki.ne.jp:587;%EMAILADDRESS%
@@ -4405,7 +4405,7 @@ outlook.ie;outlook-namsouth4.office365.com:587;%EMAILADDRESS%
 outlook.ie;outlook-namsouth5.office365.com:587;%EMAILADDRESS%
 outlook.ie;outlook-namsouth6.office365.com:587;%EMAILADDRESS%
 posteo.de;mta-sts.staging.posteo.de:587;%EMAILADDRESS%
-pp.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+pp.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 outlook.lv;smtp.office365.com:587;%EMAILADDRESS%
 outlook.lv;live-nameast.office365.com:587;%EMAILADDRESS%
 outlook.lv;live-nameast2.office365.com:587;%EMAILADDRESS%
@@ -4568,7 +4568,7 @@ ruby.plala.or.jp;www.cherry.hs.plala.or.jp:465;%EMAILADDRESS%
 ruby.plala.or.jp;ruken.hs.plala.or.jp:587;%EMAILADDRESS%
 ruby.plala.or.jp;fussa-5e.hs.plala.or.jp:465;%EMAILADDRESS%
 rescueteam.com;smtp.mail.com:465;%EMAILADDRESS%
-rr.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+rr.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 sbcglobal.net;outbound.att.net:465;%EMAILADDRESS%
 sapo.mz;smtp.sapo.pt:465;%EMAILADDRESS%
 ruhrnet-online.de;smtp.versatel.de:25;%EMAILADDRESS%
@@ -4817,7 +4817,7 @@ yahoo.es;smtp.mail.yahoo.com:465;%EMAILADDRESS%
 yahoo.es;smtp.mail.yahoo.com:587;%EMAILADDRESS%
 yahoo.es;smtp.att.yahoo.com:587;%EMAILADDRESS%
 yahoo.es;smtp.att.yahoo.com:465;%EMAILADDRESS%
-x-il.jp;mbox.iijmio-mail.jp:587;%EMAILADDRESS%.%EMAILDOMAIN%
+x-il.jp;mbox.iijmio-mail.jp:587;%EMAILADDRESS%
 yahoo.it;smtp.mail.yahoo.com:587;%EMAILADDRESS%
 yahoo.it;smtp.att.yahoo.com:587;%EMAILADDRESS%
 yahoo.it;smtp.att.yahoo.com:465;%EMAILADDRESS%
