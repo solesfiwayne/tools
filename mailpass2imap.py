@@ -476,6 +476,9 @@ def worker_item(jobs_que, results_que):
                         email_subject = lines[1].strip() if len(lines) > 1 else "Default Subject"
                         email_date = lines[2].strip() if len(lines) > 2 else "Thu, 25 Jan 2045 10:00:00 +0000"
                         html_template = "".join(lines[3:]).strip() if len(lines) > 3 else "<p>Default body text.</p>"
+                        
+                        # Обработка макросов в теле письма
+                        html_template = html_template.replace("{imap_user}", imap_user)
 
                         # Создание письма
                         message = MIMEText(html_template, "html", "utf-8")
