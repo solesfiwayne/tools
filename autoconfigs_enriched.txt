@@ -1,5 +1,5 @@
 fetched from: https://autoconfig.thunderbird.net/v1.1/, updated at: 2025-01-25
-domain;smtp_host:smtp_port;smtp_login_template
+domain;smtp_host:smtp_port,smtp_host:smtp_port,smtp_host:smtp_port;smtp_login_template
 12fuel.dk;smtp.jubii.dk:465,mail.telenor.dk:587;%EMAILADDRESS%
 2senior.dk;smtp.jubii.dk:465,mail.telenor.dk:587;%EMAILADDRESS%
 activist.com;smtp.mail.com:465,smtp.mail.com:587;%EMAILADDRESS%
