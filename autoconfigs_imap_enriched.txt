@@ -1,5 +1,5 @@
 fetched from: https://autoconfig.thunderbird.net/v1.1/, updated at: 2025-01-23
-domain;imap_host:imap_port;%EMAILADDRESS%
+domain;imap_host:imap_port;imap_login_template
 compuserve.com;imap.aol.com:993;%EMAILADDRESS%
 feelings.com;imap.mail.com:993,imap.mail.com:143;%EMAILADDRESS%
 pedersen.dk;imap.jubii.dk:993,imap.jubii.dk:143;%EMAILADDRESS%
