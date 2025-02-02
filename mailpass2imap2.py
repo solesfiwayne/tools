@@ -349,10 +349,13 @@ def imap_try_mail(imap_conn, mailbox, message):
 		imap_conn.logout()
 		raise Exception(f'Failed to send message to {mailbox}: {str(e)}')
 
+# Устанавливаем таймаут на IMAP-соединение
+socket.setdefaulttimeout(30)  # Можно изменить 30 сек или убрать None, если не нужен лимит
+
 def imap_connect_and_send(imap_server, port, login_template, imap_user, password):
     """
     Проверяет доступность IMAP-сервера, устанавливает соединение, выполняет аутентификацию
-    и закрывает соединение, если всё успешно.
+    и закрывает соединение, если всё успешно. Разрывает соединение, если оно зависает.
     """
     # Проверяем, является ли пользовательский логин email-адресом
     if is_valid_email(imap_user):
@@ -386,8 +389,8 @@ def imap_connect_and_send(imap_server, port, login_template, imap_user, password
         conn.logout()
         return True
 
-    except imaplib.IMAP4.error as e:
-        raise Exception(f"IMAP connection/authentication failed: {str(e)}")
+    except (imaplib.IMAP4.error, socket.timeout) as e:
+        raise Exception(f"[ERROR] IMAP connection/authentication failed or timed out: {str(e)}")
 
 def worker_item(jobs_que, results_que):
     global min_threads, threads_counter, verify_email, goods, imap_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
