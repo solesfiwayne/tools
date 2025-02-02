@@ -352,24 +352,37 @@ def socket_try_mail(sock, smtp_from, smtp_to, data):
 	sock.close()
 	raise Exception(answer)
 
+# Устанавливаем таймаут для SMTP-соединения (30 секунд)
+socket.setdefaulttimeout(30)
+
 def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password):
+    """
+    Подключается к SMTP-серверу, выполняет логин.
+    Разрывает соединение, если оно зависает.
+    """
     global verify_email
     if is_valid_email(smtp_user):
         smtp_login = login_template.replace('%EMAILADDRESS%', smtp_user).replace('%EMAILLOCALPART%', smtp_user.split('@')[0]).replace('%EMAILDOMAIN%', smtp_user.split('@')[1])
     else:
         smtp_login = smtp_user
-    s = socket_get_free_smtp_server(smtp_server, port)
-    answer = socket_send_and_read(s)
-    if answer[:3] == '220':  # Успешное подключение к серверу
-        s = socket_try_tls(s, smtp_server) if port != '465' else s
-        s = socket_try_login(s, smtp_server, smtp_login, password)  # Попытка входа
 
-        # Если аутентификация успешна, сервер считается рабочим
+    try:
+        s = socket_get_free_smtp_server(smtp_server, port)
+        answer = socket_send_and_read(s)
+        if answer[:3] == '220':  # Успешное подключение к серверу
+            s = socket_try_tls(s, smtp_server) if port != '465' else s
+            s = socket_try_login(s, smtp_server, smtp_login, password)  # Попытка входа
+
+            # Если аутентификация успешна, сервер считается рабочим
+            s.close()
+            return True
+
         s.close()
-        return True
+        raise Exception(answer)
 
-    s.close()
-    raise Exception(answer)
+    except (socket.timeout, ConnectionResetError) as e:
+        print(f"[ERROR] SMTP-соединение разорвано из-за таймаута или сброса соединения: {e}")
+        return False
 
 def worker_item(jobs_que, results_que):
 	global min_threads, threads_counter, verify_email, goods, smtp_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
