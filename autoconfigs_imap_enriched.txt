@@ -355,7 +355,7 @@ zohomail.com;imap.zoho.com:993;%EMAILADDRESS%
 2senior.dk;imap.jubii.dk:993,mail.telenor.dk:143;%EMAILADDRESS%
 heavymail.dk;imap.jubii.dk:993;%EMAILADDRESS%
 as12bfb.com;imap.as12bfb.com:993;%EMAILADDRESS%
-mail.com;imap.mail.com:143,imap.mail.com:993;%EMAILADDRESS%
+mail.com;imap.mail.com:993,imap.mail.com:143;%EMAILADDRESS%
 mail.ru;imap.mail.ru:143,imap.mail.ru:993;%EMAILADDRESS%
 ameritech.net;imap.mail.att.net:993;%EMAILADDRESS%
 usa.com;imap.mail.com:143,imap.mail.com:993;%EMAILADDRESS%
