@@ -203,6 +203,7 @@ arubapec.it;smtps.pec.aruba.it:465;%EMAILADDRESS%
 bemybaby.dk;smtp.jubii.dk:465;%EMAILADDRESS%
 bigpond.net.au;smtp.telstra.com:465;%EMAILADDRESS%
 biglobe.ne.jp;mail.biglobe.ne.jp:465;%EMAILADDRESS%
+biglobe.ne.jp;mail.biglobe.ne.jp:587;%EMAILADDRESS%
 blader.com;smtp.mail.com:465;%EMAILADDRESS%
 brazilmail.com;smtp.mail.com:465;%EMAILADDRESS%
 bedstemail.dk;smtp.jubii.dk:465;%EMAILADDRESS%
