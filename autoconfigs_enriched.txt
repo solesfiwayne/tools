@@ -202,7 +202,7 @@ artlover.com;smtp.mail.com:465,smtp.mail.com:587;%EMAILADDRESS%
 arubapec.it;smtps.pec.aruba.it:465,safety21.pec.aruba.it:465;%EMAILADDRESS%
 bemybaby.dk;smtp.jubii.dk:465;%EMAILADDRESS%
 bigpond.net.au;smtp.telstra.com:465;%EMAILADDRESS%
-biglobe.ne.jp;mail.biglobe.ne.jp:587,mail.biglobe.ne.jp:465,octopus.biglobe.ne.jp:465;%EMAILADDRESS%
+biglobe.ne.jp;mail.biglobe.ne.jp:587,mail.biglobe.ne.jp:465,octopus.biglobe.ne.jp:587,octopus.biglobe.ne.jp:465;%EMAILADDRESS%
 blader.com;smtp.mail.com:465,smtp.mail.com:587;%EMAILADDRESS%
 brazilmail.com;smtp.mail.com:465,smtp.mail.com:587;%EMAILADDRESS%
 bedstemail.dk;smtp.jubii.dk:465;%EMAILADDRESS%
