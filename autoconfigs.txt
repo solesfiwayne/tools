@@ -892,7 +892,6 @@ am0.yahoodns.net;smtp.att.yahoo.com:465;%EMAILADDRESS%
 begavet.dk;mail.telenor.dk:587;%EMAILADDRESS%
 bigpond.com;smtp.telstra.com:465;%EMAILADDRESS%
 berlin.com;smtp.mail.com:465;%EMAILADDRESS%
-biglobe.ne.jp;octopus.biglobe.ne.jp:465;%EMAILADDRESS%
 bk.iij4u.or.jp;mbox.iij4u.or.jp:587;%EMAILADDRESS%
 bk.ru;smtp32.i.mail.ru:465;%EMAILADDRESS%
 bk.ru;smtp55.i.mail.ru:465;%EMAILADDRESS%
