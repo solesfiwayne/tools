@@ -39,14 +39,6 @@ autoconfig_data_url = 'https://raw.githubusercontent.com/solesfiwayne/tools/refs
 # dangerous mx domains
 dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan|avast|barracuda|baseq|bitdefender|broadcom|btitalia|censornet|checkpoint|cisco|cistymail|clean-mailbox|clearswift|closedport|cloudflare|comforte|corvid|crsp|cyren|darktrace|data-mail-group|dmarcly|drweb|duocircle|e-purifier|earthlink-vadesecure|ecsc|eicar|elivescanned|eset|essentials|exchangedefender|fireeye|forcepoint|fortinet|gartner|gatefy|gonkar|guard|helpsystems|heluna|hosted-247|iberlayer|indevis|infowatch|intermedia|intra2net|invalid|ioactive|ironscales|isync|itserver|jellyfish|kcsfa.co|keycaptcha|krvtz|libraesva|link11|localhost|logix|mailborder.co|mailchannels|mailcleaner|mailcontrol|mailinator|mailroute|mailsift|mailstrainer|mcafee|mdaemon|mimecast|mx-relay|mx1.ik2|mx37\.m..p\.com|mxcomet|mxgate|mxstorm|n-able|n2net|nano-av|netintelligence|network-box|networkboxusa|newnettechnologies|newtonit.co|odysseycs|openwall|opswat|perfectmail|perimeterwatch|plesk|prodaft|proofpoint|proxmox|redcondor|reflexion|retarus|safedns|safeweb|sec-provider|secureage|securence|security|sendio|shield|sicontact|sonicwall|sophos|spamtitan|spfbl|spiceworks|stopsign|supercleanmail|techtarget|titanhq|trellix|trendmicro|trustifi|trustwave|tryton|uni-muenster|usergate|vadesecure|wessexnetworks|zillya|zyxel|fucking-shit|please|kill-me-please|virus|bot|trap|honey|lab|virtual|vm\d|research|abus|security|filter|junk|rbl|ubl|spam|black|list|bad|brukalai|metunet|excello'
 
-# CRITICAL FIX: Pre-compile regex with proper error handling
-dangerous_regex = None
-try:
-    dangerous_regex = re.compile(dangerous_domains, re.IGNORECASE)
-except Exception as e:
-    print(f'ERROR: dangerous_regex compilation failed: {e}')
-    sys.exit(1)
-
 b   = '\033[1m'
 z   = '\033[0m'
 wl  = '\033[2K'
@@ -70,7 +62,7 @@ def show_banner():
          ╙█                           ╙                                         
           ╙     {b}MadCat SMTP Checker & Cracker v44.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
-                https://github.com/els/mailtools
+                https://github.com/aels/mailtools
                 https://t.me/IamLavander
     """
     for line in banner.splitlines():
