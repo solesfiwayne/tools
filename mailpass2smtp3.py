@@ -205,8 +205,8 @@ def is_listening(ip, port):
 
 def get_rand_ip_of_host(host, attempt=0):
 	global resolver_obj
-	if attempt > 10:
-		raise Exception('DNS resolution failed after 10 attempts')
+	if attempt > 3:  # УМЕНЬШЕНО С 10 ДО 3
+		raise Exception('DNS resolution failed after 3 attempts')
 	try:
 		try:
 			host = cached_dns_resolve(host, 'cname')[0].target
@@ -394,13 +394,13 @@ def socket_try_mail(sock, smtp_from, smtp_to, data):
 	sock.close()
 	raise Exception(answer)
 
-def smtp_connect_with_retry(smtp_server, port, login_template, smtp_user, password, max_retries=3):
+def smtp_connect_with_retry(smtp_server, port, login_template, smtp_user, password, max_retries=2):  # УМЕНЬШЕНО С 3 ДО 2
 	for attempt in range(max_retries):
 		try:
 			return smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password)
 		except Exception as e:
 			if attempt < max_retries - 1 and ('try later' in str(e).lower() or 'threshold' in str(e).lower()):
-				wait = (2 ** attempt) + random.uniform(0, 1)
+				wait = (2 ** attempt) * 0.5  # УМЕНЬШЕНО: 0.5, 1.0 секунды вместо 1,2,4
 				time.sleep(wait)
 				continue
 			raise
@@ -430,11 +430,8 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
 		return False
 
 def human_like_delay():
-	delay = abs(random.gauss(0.5, 0.2))
-	if random.random() < 0.05:
-		delay += random.uniform(2, 5)
-	if delay > 0.1:
-		time.sleep(delay)
+	# ОПТИМИЗАЦИЯ: ПУСТАЯ ФУНКЦИЯ = МАКСИМАЛЬНАЯ СКОРОСТЬ
+	pass
 
 def worker_item(jobs_que, results_que):
 	global min_threads, threads_counter, verify_email, goods, smtp_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
@@ -475,7 +472,7 @@ def worker_item(jobs_que, results_que):
 					raise Exception('connection failed after retries')
 			except Exception as e:
 				results_que.put(orange((smtp_server and port and smtp_server+':'+port+' - ' or '')+', '.join(str(e).splitlines()).strip()))
-			human_like_delay()
+			# ЗАДЕРЖКА УБРАНА: human_like_delay() теперь пустая
 			loop_times.append(time.perf_counter() - time_start)
 			while len(loop_times) > min_threads:
 				loop_times.pop(0)
