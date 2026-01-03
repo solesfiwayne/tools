@@ -49,7 +49,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v24.12.15{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v55.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -277,28 +277,28 @@ def is_valid_email(email):
 	return EMAIL_REGEX.match(email) is not None
 
 def find_email_password_collumnes(list_filename):
-    email_column = False
-    with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
-        for i, line in enumerate(fp):
-            if i > 1000:  # ПРАВКА: Ограничиваем проверку первыми 1000 строками
-                break
-            line = normalize_delimiters(line.lower())
-            email_match = EMAIL_REGEX.search(line)  # ПРАВКА: Используем скомпилированный regex
-            if email_match:
-                email = email_match.group(0)
-                email_column = line.split(email)[0].count(':')
-                password_column = email_column + 1
-                
-                # ПРАВКА: Болёе надёжная проверка формата строки
-                parts = line.split(':')
-                if len(parts) > password_column and len(parts[password_column]) > 5:
-                    # Проверяем, что пароль действительно после email
-                    if email in parts[email_column]:
-                        return (email_column, password_column)
-                
-    if email_column is not False:
-        return (email_column, email_column + 1)  # Fallback
-    raise Exception('the file you provided does not contain emails')
+	email_collumn = False
+	with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
+		for i, line in enumerate(fp):
+			if i > 1000:  # ПРАВКА: Ограничиваем проверку первыми 1000 строками
+				break
+			line = normalize_delimiters(line.lower())
+			email_match = EMAIL_REGEX.search(line)  # ПРАВКА: Используем скомпилированный regex
+			if email_match:
+				email = email_match.group(0)
+				email_collumn = line.split(email)[0].count(':')
+				password_collumn = email_collumn + 1
+				
+				# ПРАВКА: Болёе надёжная проверка формата строки
+				parts = line.split(':')
+				if len(parts) > password_collumn and len(parts[password_collumn]) > 5:
+					# Проверяем, что пароль действительно после email
+					if email in parts[email_collumn]:
+						return (email_collumn, password_collumn)
+				
+	if email_collumn is not False:
+		return (email_collumn, email_collumn + 1)  # Fallback
+	raise Exception('the file you provided does not contain emails')
 
 def wc_count(filename, lines=0):
     file_handle = open(filename, 'rb')
