@@ -49,7 +49,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v35.12.15{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v55.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -397,13 +397,13 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
     else:
         smtp_login = smtp_user
 
-    # Только 1 повторная попытка для чистых таймаутов
+    # ПРАВКА: Только 1 повторная попытка для чистых таймаутов
     for attempt in range(2):
         try:
             s = socket_get_free_smtp_server(smtp_server, port)
             answer = socket_send_and_read(s)
             if answer[:3] == '220':
-                s = socket_try_tls(s, smtp_server) if port != ' 465' else s
+                s = socket_try_tls(s, smtp_server) if port != '465' else s
                 s = socket_try_login(s, smtp_server, smtp_login, password)
                 s.close()
                 return True
