@@ -49,7 +49,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v44.12.15{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v55.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -210,12 +210,12 @@ def get_alive_neighbor(ip, port):
 		return ip
 	else:
 		tail = int(ip.split('.')[-1])
-		prev_neighbor_ip = re.sub(r'\.\d+$', '.'+str(tail - 1 if tail>0 else 2), ip)
-		next_neighbor_ip = re.sub(r'\.\d+$', '.'+str(tail + 1 if tail<255 else 253), ip)
-		if is_listening(prev_neighbor_ip, port):
-			return prev_neighbor_ip
-		if is_listening(next_neighbor_ip, port):
-			return next_neighbor_ip
+		# ПРАВКА: 4 соседа вместо 2 для лучшего обхода блокировок
+		for neighbor in [tail-2, tail-1, tail+1, tail+2]:
+			if 0 <= neighbor <= 255:
+				neighbor_ip = re.sub(r'\.\d+$', '.'+str(neighbor), ip)
+				if is_listening(neighbor_ip, port):
+					return neighbor_ip
 		raise Exception('No listening neighbors found for '+ip+':'+str(port))
 
 def guess_smtp_server(domain):
