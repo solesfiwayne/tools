@@ -12,12 +12,12 @@ if not sys.version_info[0] > 2 and not sys.version_info[1] > 8:
 	exit('\033[0;31mpython 3.9 is required. try to run this script with \033[1mpython3\033[0;31m instead of \033[1mpython\033[0m')
 
 sys.stdout.reconfigure(encoding='utf-8')
-# Это предотвратит случайные ошибки и повреждение кэша при параллельной работе множества потоков
-config_cache_lock = threading.Lock()
 # mail providers, where SMTP access is desabled by default
 bad_mail_servers = 'bk.ru,qq.com'
 # additional dns servers
 custom_dns_nameservers = '1.1.1.2,1.0.0.2,208.67.222.222,208.67.220.220,1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4,9.9.9.9,149.112.112.112,185.228.168.9,185.228.169.9,76.76.19.19,76.223.122.150,94.140.14.14,94.140.15.15,84.200.69.80,84.200.70.40,8.26.56.26,8.20.247.20,205.171.3.65,205.171.2.65,195.46.39.39,195.46.39.40,159.89.120.99,134.195.4.2,216.146.35.35,216.146.36.36,45.33.97.5,37.235.1.177,77.88.8.8,77.88.8.1,91.239.100.100,89.233.43.71,80.80.80.80,80.80.81.81,74.82.42.42,,64.6.64.6,64.6.65.6,45.77.165.194,45.32.36.36'.split(',')
+# Thread-safe lock for domain config cache
+config_cache_lock = threading.Lock()
 # more dns servers url
 dns_list_url = 'https://public-dns.info/nameservers.txt'
 # expanded lists of SMTP endpoints, where we can knock
@@ -48,7 +48,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v22.12.15{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v0.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -259,7 +259,7 @@ def get_smtp_config(domain):
     global domain_configs_cache, default_login_template, config_cache_lock
     domain = domain.lower()
     
-    # ПРАВКА: Thread-safe проверка и обновление кэша
+    # ПРАВКА: Thread-safe кэш без лишних операций
     with config_cache_lock:
         if domain not in domain_configs_cache:
             domain_configs_cache[domain] = guess_smtp_server(domain)
