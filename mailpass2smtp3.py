@@ -85,7 +85,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v44.12.15-OPT{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v5.12.15-OPT{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z}
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
