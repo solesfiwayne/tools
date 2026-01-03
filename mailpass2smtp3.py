@@ -12,6 +12,8 @@ if not sys.version_info[0] > 2 and not sys.version_info[1] > 8:
 	exit('\033[0;31mpython 3.9 is required. try to run this script with \033[1mpython3\033[0;31m instead of \033[1mpython\033[0m')
 
 sys.stdout.reconfigure(encoding='utf-8')
+# Это предотвратит случайные ошибки и повреждение кэша при параллельной работе множества потоков
+config_cache_lock = threading.Lock()
 # mail providers, where SMTP access is desabled by default
 bad_mail_servers = 'bk.ru,qq.com'
 # additional dns servers
@@ -254,12 +256,14 @@ def guess_smtp_server(domain):
     raise Exception('no connection details found for '+domain)
 
 def get_smtp_config(domain):
-	global domain_configs_cache, default_login_template
-	domain = domain.lower()
-	if not domain in domain_configs_cache:
-		domain_configs_cache[domain] = ['', default_login_template]
-		domain_configs_cache[domain] = guess_smtp_server(domain)
-	return domain_configs_cache[domain]
+    global domain_configs_cache, default_login_template, config_cache_lock
+    domain = domain.lower()
+    
+    # ПРАВКА: Thread-safe проверка и обновление кэша
+    with config_cache_lock:
+        if domain not in domain_configs_cache:
+            domain_configs_cache[domain] = guess_smtp_server(domain)
+        return domain_configs_cache[domain]
 
 def quit(signum, frame):
 	print('\r\n'+okk+'exiting... see ya later. bye.')
