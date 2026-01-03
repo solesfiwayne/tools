@@ -16,6 +16,14 @@ if not sys.version_info[0] > 2 and not sys.version_info[1] > 8:
 
 sys.stdout.reconfigure(encoding='utf-8')
 
+# Thread-safe locks
+goods_lock = threading.Lock()
+ignored_lock = threading.Lock()
+progress_lock = threading.Lock()
+smtp_file_lock = threading.Lock()
+config_cache_lock = threading.Lock()
+thread_counter_lock = threading.Lock()
+
 # mail providers where SMTP access is disabled by default
 bad_mail_servers = 'bk.ru,qq.com'
 
@@ -25,13 +33,13 @@ custom_dns_nameservers = '1.1.1.2,1.0.0.2,208.67.222.222,208.67.220.220,1.1.1.1,
 # more dns servers url
 dns_list_url = 'https://public-dns.info/nameservers.txt'
 
-# expanded lists of SMTP endpoints where we can knock
+# expanded lists of SMTP endpoints
 autoconfig_data_url = 'https://raw.githubusercontent.com/solesfiwayne/tools/refs/heads/main/autoconfigs_enriched.txt'
 
-# dangerous mx domains, skipping them all
+# dangerous mx domains
 dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan|avast|barracuda|baseq|bitdefender|broadcom|btitalia|censornet|checkpoint|cisco|cistymail|clean-mailbox|clearswift|closedport|cloudflare|comforte|corvid|crsp|cyren|darktrace|data-mail-group|dmarcly|drweb|duocircle|e-purifier|earthlink-vadesecure|ecsc|eicar|elivescanned|eset|essentials|exchangedefender|fireeye|forcepoint|fortinet|gartner|gatefy|gonkar|guard|helpsystems|heluna|hosted-247|iberlayer|indevis|infowatch|intermedia|intra2net|invalid|ioactive|ironscales|isync|itserver|jellyfish|kcsfa.co|keycaptcha|krvtz|libraesva|link11|localhost|logix|mailborder.co|mailchannels|mailcleaner|mailcontrol|mailinator|mailroute|mailsift|mailstrainer|mcafee|mdaemon|mimecast|mx-relay|mx1.ik2|mx37\.m..p\.com|mxcomet|mxgate|mxstorm|n-able|n2net|nano-av|netintelligence|network-box|networkboxusa|newnettechnologies|newtonit.co|odysseycs|openwall|opswat|perfectmail|perimeterwatch|plesk|prodaft|proofpoint|proxmox|redcondor|reflexion|retarus|safedns|safeweb|sec-provider|secureage|securence|security|sendio|shield|sicontact|sonicwall|sophos|spamtitan|spfbl|spiceworks|stopsign|supercleanmail|techtarget|titanhq|trellix|trendmicro|trustifi|trustwave|tryton|uni-muenster|usergate|vadesecure|wessexnetworks|zillya|zyxel|fucking-shit|please|kill-me-please|virus|bot|trap|honey|lab|virtual|vm\d|research|abus|security|filter|junk|rbl|ubl|spam|black|list|bad|brukalai|metunet|excello'
 
-# Critical fix: Pre-compile regex with error handling
+# CRITICAL FIX: Pre-compile regex with proper error handling
 dangerous_regex = None
 try:
     dangerous_regex = re.compile(dangerous_domains, re.IGNORECASE)
@@ -62,7 +70,7 @@ def show_banner():
          ╙█                           ╙                                         
           ╙     {b}MadCat SMTP Checker & Cracker v44.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
-                https://github.com/aels/mailtools
+                https://github.com/els/mailtools
                 https://t.me/IamLavander
     """
     for line in banner.splitlines():
@@ -272,7 +280,7 @@ def guess_smtp_server(domain):
             mx_candidate = str(mx.exchange).rstrip('.')
             is_dangerous = (dangerous_regex is not None and dangerous_regex.search(mx_candidate))
             is_outlook = re.search(r'\.outlook\.com$', mx_candidate)
-            if not is_dangerous or is_outlook:  # CRITICAL FIX: CORRECT LOGIC
+            if not is_dangerous or is_outlook:
                 domains_arr.append(mx_candidate)
                 mx_domain = mx_candidate
                 break
