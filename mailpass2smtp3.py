@@ -49,7 +49,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v24.12.15{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v44.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -409,17 +409,12 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
                 return True
             s.close()
             raise Exception(answer)
-except (socket.timeout, ConnectionResetError) as e:
-    if attempt == 0:
-        time.sleep(1.5)
-        continue
-    return False
-except Exception as e:
-    # ПРАВКА: Повторяем и при rate limit ошибках
-    if any(x in str(e).lower() for x in ['try later', 'threshold', 'limit', 'too many']) and attempt == 0:
-        time.sleep(2)
-        continue
-    return False
+        except (socket.timeout, ConnectionResetError) as e:
+            # Только таймауты и сбросы - делаем 1 повтор
+            if attempt == 0:
+                time.sleep(1.5)
+                continue
+            return False
         except Exception as e:
             # Любые другие ошибки (auth failed, etc) - сразу возвращаем False
             return False
