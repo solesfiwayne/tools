@@ -46,7 +46,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v24.12.15{1}
+          ╙     {b}MadCat SMTP Checker & Cracker v24.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -172,7 +172,7 @@ def is_listening(ip, port):
 		port = int(port)
 		socket_type = socket.AF_INET6 if ':' in ip else socket.AF_INET
 		s = socket.socket(socket_type, socket.SOCK_STREAM)
-		s.settimeout(3)
+		s.settimeout(8)  # ПРАВКА: Увеличено для медленных серверов
 		s = ssl.wrap_socket(s, server_hostname=ip, do_handshake_on_connect=False) if port == 465 else s
 		s.connect((ip, port))
 		s.close()
@@ -544,6 +544,9 @@ progress = start_from_line
 default_login_template = '%EMAILADDRESS%'
 total_lines = wc_count(list_filename)
 resolver_obj = dns.resolver.Resolver()
+# ПРАВКА: Увеличиваем таймауты DNS resolver
+resolver_obj.timeout = 3  # секунды на один запрос
+resolver_obj.lifetime = 5  # общий таймаут на запрос
 domain_configs_cache = {}
 
 print(inf+'loading SMTP configs...'+up)
