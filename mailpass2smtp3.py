@@ -46,7 +46,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v24.12.12{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v24.12.13{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -306,21 +306,29 @@ def socket_send_and_read(sock, cmd=''):
 	return scream
 
 def socket_get_free_smtp_server(smtp_server, port):
-	port = int(port)
-	smtp_server_ip = get_rand_ip_of_host(smtp_server)
-	socket_type = socket.AF_INET6 if ':' in smtp_server_ip else socket.AF_INET
-	s = socket.socket(socket_type, socket.SOCK_STREAM)
-	s = ssl._create_unverified_context().wrap_socket(s) if port == 465 else s
-	s.settimeout(5)
-	try:
-		s.connect((smtp_server_ip, port))
-	except Exception as e:
-		if re.search(r'too many connections|threshold limitation|parallel connections|try later|refuse', str(e).lower()):
-			smtp_server_ip = get_alive_neighbor(smtp_server_ip, port)
-			s.connect((smtp_server_ip, port))
-		else:
-			raise Exception(e)
-	return s
+    port = int(port)
+    smtp_server_ip = get_rand_ip_of_host(smtp_server)
+    socket_type = socket.AF_INET6 if ':' in smtp_server_ip else socket.AF_INET
+    s = socket.socket(socket_type, socket.SOCK_STREAM)
+    s.settimeout(8)  # Увеличено для медленных серверов
+    
+    try:
+        s.connect((smtp_server_ip, port))
+        # ПРАВКА: SSL обёртка ТОЛЬКО ПОСЛЕ успешного подключения для порта 465
+        if port == 465:
+            context = ssl._create_unverified_context()
+            s = context.wrap_socket(s, server_hostname=smtp_server_ip)
+        return s
+    except Exception as e:
+        if re.search(r'too many connections|threshold limitation|parallel connections|try later|refuse', str(e).lower()):
+            smtp_server_ip = get_alive_neighbor(smtp_server_ip, port)
+            s.connect((smtp_server_ip, port))
+            if port == 465:  # Повторная обёртка для нового соединения
+                context = ssl._create_unverified_context()
+                s = context.wrap_socket(s, server_hostname=smtp_server_ip)
+        else:
+            raise Exception(e)
+    return s
 
 def socket_try_tls(sock, self_host):
 	answer = socket_send_and_read(sock, 'EHLO '+self_host)
