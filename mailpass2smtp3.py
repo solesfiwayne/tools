@@ -49,7 +49,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v54.12.15{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v24.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -276,7 +276,7 @@ def quit(signum, frame):
 def is_valid_email(email):
 	return EMAIL_REGEX.match(email) is not None
 
-def find_email_password_columns(list_filename):
+def find_email_password_collumnes(list_filename):
     email_column = False
     with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
         for i, line in enumerate(fp):
