@@ -49,7 +49,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v55.12.15{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v25.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -280,24 +280,19 @@ def find_email_password_collumnes(list_filename):
 	email_collumn = False
 	with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
 		for i, line in enumerate(fp):
-			if i > 1000:  # ПРАВКА: Ограничиваем проверку первыми 1000 строками
+			if i > 1000:  # Ограничиваем проверку первыми 1000 строками
 				break
 			line = normalize_delimiters(line.lower())
-			email_match = EMAIL_REGEX.search(line)  # ПРАВКА: Используем скомпилированный regex
+			email_match = EMAIL_REGEX.search(line)  # Используем скомпилированный regex
 			if email_match:
 				email = email_match.group(0)
 				email_collumn = line.split(email)[0].count(':')
 				password_collumn = email_collumn + 1
-				
-				# ПРАВКА: Болёе надёжная проверка формата строки
-				parts = line.split(':')
-				if len(parts) > password_collumn and len(parts[password_collumn]) > 5:
-					# Проверяем, что пароль действительно после email
-					if email in parts[email_collumn]:
-						return (email_collumn, password_collumn)
+				# Возвращаем сразу при первом найденном email (как в оригинале)
+				return (email_collumn, password_collumn)
 				
 	if email_collumn is not False:
-		return (email_collumn, email_collumn + 1)  # Fallback
+		return (email_collumn, password_collumn)
 	raise Exception('the file you provided does not contain emails')
 
 def wc_count(filename, lines=0):
