@@ -25,6 +25,9 @@ dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan
 # Компилируем regex один раз для производительности
 dangerous_regex = re.compile(dangerous_domains, re.IGNORECASE)
 
+# ПРАВКА: Предкомпилируем email regex для быстрой валидации
+EMAIL_REGEX = re.compile(r'^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$')
+
 b   = '\033[1m'
 z   = '\033[0m'
 wl  = '\033[2K'
@@ -46,7 +49,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v24.12.15{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v84.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -271,7 +274,7 @@ def quit(signum, frame):
 	sys.exit(0)
 
 def is_valid_email(email):
-	return re.match(r'^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$', email)
+	return EMAIL_REGEX.match(email) is not None
 
 def find_email_password_collumnes(list_filename):
 	email_collumn = False
