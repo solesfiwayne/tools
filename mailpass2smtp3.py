@@ -22,6 +22,8 @@ dns_list_url = 'https://public-dns.info/nameservers.txt'
 autoconfig_data_url = 'https://raw.githubusercontent.com/solesfiwayne/tools/refs/heads/main/autoconfigs_enriched.txt'
 # dangerous mx domains, skipping them all
 dangerous_domains = r'acronis|acros|adlice|alinto|appriver|aspav|atomdata|avanan|avast|barracuda|baseq|bitdefender|broadcom|btitalia|censornet|checkpoint|cisco|cistymail|clean-mailbox|clearswift|closedport|cloudflare|comforte|corvid|crsp|cyren|darktrace|data-mail-group|dmarcly|drweb|duocircle|e-purifier|earthlink-vadesecure|ecsc|eicar|elivescanned|eset|essentials|exchangedefender|fireeye|forcepoint|fortinet|gartner|gatefy|gonkar|guard|helpsystems|heluna|hosted-247|iberlayer|indevis|infowatch|intermedia|intra2net|invalid|ioactive|ironscales|isync|itserver|jellyfish|kcsfa.co|keycaptcha|krvtz|libraesva|link11|localhost|logix|mailborder.co|mailchannels|mailcleaner|mailcontrol|mailinator|mailroute|mailsift|mailstrainer|mcafee|mdaemon|mimecast|mx-relay|mx1.ik2|mx37\.m..p\.com|mxcomet|mxgate|mxstorm|n-able|n2net|nano-av|netintelligence|network-box|networkboxusa|newnettechnologies|newtonit.co|odysseycs|openwall|opswat|perfectmail|perimeterwatch|plesk|prodaft|proofpoint|proxmox|redcondor|reflexion|retarus|safedns|safeweb|sec-provider|secureage|securence|security|sendio|shield|sicontact|sonicwall|sophos|spamtitan|spfbl|spiceworks|stopsign|supercleanmail|techtarget|titanhq|trellix|trendmicro|trustifi|trustwave|tryton|uni-muenster|usergate|vadesecure|wessexnetworks|zillya|zyxel|fucking-shit|please|kill-me-please|virus|bot|trap|honey|lab|virtual|vm\d|research|abus|security|filter|junk|rbl|ubl|spam|black|list|bad|brukalai|metunet|excello'
+# Компилируем regex один раз для производительности
+dangerous_regex = re.compile(dangerous_domains, re.IGNORECASE)
 
 b   = '\033[1m'
 z   = '\033[0m'
@@ -214,30 +216,32 @@ def get_alive_neighbor(ip, port):
 		raise Exception('No listening neighbors found for '+ip+':'+str(port))
 
 def guess_smtp_server(domain):
-    global default_login_template, resolver_obj, domain_configs_cache, dangerous_regex
+    global default_login_template, resolver_obj, domain_configs_cache, dangerous_domains, dangerous_regex
     domains_arr = [domain, 'smtp-qa.'+domain, 'smtp.'+domain, 'mail.'+domain, 'webmail.'+domain, 'mx.'+domain]
-    mx_domain = None
+    
+    # ПРАВКА: Добавляем все MX записи в список для проверки
     try:
         mx_records = list(resolver_obj.resolve(domain, 'mx'))
-        # ПРАВКА: Перебираем все MX записи, берём первую безопасную
+        mx_domain = str(mx_records[0].exchange).rstrip('.')  # Первая MX для совместимости
+        
+        # Проверяем dangerous только для первой MX (как в оригинале)
+        if is_ignored_host(mx_domain) or re.search(dangerous_domains, mx_domain) and not re.search(r'\.outlook\.com$', mx_domain):
+            raise Exception(white('skipping domain: '+mx_domain+' (for '+domain+')',2))
+        
+        # Добавляем ВСЕ MX в domains_arr для перебора
         for mx in mx_records:
-            mx_candidate = str(mx.exchange).rstrip('.')
-            is_dangerous = (dangerous_regex and dangerous_regex.search(mx_candidate))
-            is_outlook = re.search(r'\.outlook\.com$', mx_candidate)
-            if not (is_dangerous and not is_outlook):
-                domains_arr.append(mx_candidate)
-                mx_domain = mx_candidate
-                break
+            domains_arr.append(str(mx.exchange).rstrip('.'))
+            
     except Exception as e:
         reason = 'solution lifetime expired'
+        msg = 'dns resolver overloaded. switching...'
         if reason in str(e):
-            switch_dns_nameserver()
-            return guess_smtp_server(domain)
-        raise Exception('no MX records found for: '+domain)
+            return switch_dns_nameserver() and guess_smtp_server(domain)
+        else:
+            raise Exception('no MX records found for: '+domain)
     
-    if mx_domain and re.search(r'protection\.outlook\.com$', mx_domain):
-        return domain_configs_cache.get('outlook.com', ([], default_login_template))
-    
+    if re.search(r'protection\.outlook\.com$', mx_domain):
+        return domain_configs_cache['outlook.com']
     for host in domains_arr:
         try:
             ip = get_rand_ip_of_host(host)
@@ -246,7 +250,7 @@ def guess_smtp_server(domain):
         for port in [2525, 587, 465, 25]:
             debug(f'trying {host}, {ip}:{port}')
             if is_listening(ip, port):
-                return ([host+':'+str(port)], default_login_template)
+                    return ([host+':'+str(port)], default_login_template)
     raise Exception('no connection details found for '+domain)
 
 def get_smtp_config(domain):
