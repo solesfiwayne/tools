@@ -41,18 +41,18 @@ npt = b+'[\033[37m?\033[37m] '+z
 def show_banner():
 	banner = f"""
 
-			  ,▄   .╓███?				,, .╓███)							  
-			╓███| ╓█████╟			   ╓█/,███╙				  ▄▌			
-		   ▄█^[██╓█* ██F   ,,,		,╓██ ███`	 ,▌		  ╓█▀			 
-		  ╓█` |███7 ▐██!  █▀╙██b   ▄██╟██ ▐██	  ▄█   ▄███) ,╟█▀▀`			
-		  █╟  `██/  ██]  ██ ,██   ██▀╓██  ╙██.   ,██` ,██.╓█▌ ╟█▌			   
-		 |█|	`   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌			 
-		 ╟█		  `	▀▀  ╙█▀ `╙`╟█	  `▀▀^`	▀█╙  ╙   ▀█▀`			 
-		 ╙█						   ╙										 
-		  ╙	 {b}MadCat SMTP Checker & Cracker v24.12.15{z}
-				Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
-				https://github.com/aels/mailtools
-				https://t.me/IamLavander
+              ,▄   .╓███?                ,, .╓███)                              
+            ╓███| ╓█████╟               ╓█/,███╙                  ▄▌            
+           ▄█^[██╓█* ██F   ,,,        ,╓██ ███`     ,▌          ╓█▀             
+          ╓█` |███7 ▐██!  █▀╙██b   ▄██╟██ ▐██      ▄█   ▄███) ,╟█▀▀`            
+          █╟  `██/  ██]  ██ ,██   ██▀╓██  ╙██.   ,██` ,██.╓█▌ ╟█▌               
+         |█|    `   ██/  ███▌╟█, (█████▌   ╙██▄▄███   @██▀`█  ██ ▄▌             
+         ╟█          `    ▀▀  ╙█▀ `╙`╟█      `▀▀^`    ▀█╙  ╙   ▀█▀`             
+         ╙█                           ╙                                         
+          ╙     {b}MadCat SMTP Checker & Cracker v44.12.15{z}
+                Made by {b}Aels{z} for community: {b}https://xss.is{z} - forum of security professionals
+                https://github.com/aels/mailtools
+                https://t.me/IamLavander
 	"""
 	for line in banner.splitlines():
 		print(line)
